@@ -1,0 +1,2965 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宠物托运工作台</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    background: #f4f6f9; color: #1f2733; font-size: 14px;
+  }
+  header {
+    background: #ffffff; border-bottom: 1px solid #e6eaf0;
+    padding: 12px 18px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  header h1 { font-size: 17px; margin: 0; letter-spacing: .5px; }
+  header .sub { color: #8794a5; font-size: 12px; }
+  .stats { margin-left: auto; display: flex; gap: 16px; font-size: 12px; color: #5a6675; }
+  .stats b { font-size: 15px; color: #2563eb; margin-right: 3px; }
+  nav {
+    background: #ffffff; border-bottom: 1px solid #e6eaf0; padding: 0 12px;
+    display: flex; gap: 4px; position: sticky; top: 0; z-index: 20;
+  }
+  nav button {
+    border: none; background: none; padding: 12px 16px; cursor: pointer;
+    font-size: 14px; color: #5a6675; border-bottom: 2px solid transparent;
+  }
+  nav button.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 600; }
+  main { padding: 16px; max-width: 1400px; margin: 0 auto; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .card { background: #fff; border: 1px solid #e6eaf0; border-radius: 10px; padding: 14px; margin-bottom: 14px; }
+  .card h3 { margin: 0 0 10px; font-size: 15px; }
+  #panel-data.dragging { outline: 2px dashed #2563eb; outline-offset: 4px; background: #f0f5ff; }
+  .dropzone {
+    border: 2px dashed #c9d6ea; border-radius: 10px; background: #fafcff; padding: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    color: #5a6675; font-size: 13px; text-align: center;
+    transition: border-color .15s, background .15s;
+  }
+  .dropzone b { color: #1f2733; }
+  .dropzone.dragging { border-color: #2563eb; background: #eef4ff; }
+  .subtabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .subtabs button {
+    border: 1px solid #d9e0ea; background: #fff; border-radius: 20px;
+    padding: 6px 14px; cursor: pointer; font-size: 13px; color: #5a6675;
+  }
+  .subtabs button.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  input, select, textarea {
+    font-family: inherit; font-size: 13px; padding: 7px 10px; border: 1px solid #d9e0ea;
+    border-radius: 7px; background: #fff; color: #1f2733; outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: #2563eb; }
+  .btn {
+    border: 1px solid #2563eb; background: #2563eb; color: #fff; border-radius: 7px;
+    padding: 7px 14px; cursor: pointer; font-size: 13px; white-space: nowrap;
+  }
+  .btn.ghost { background: #fff; color: #2563eb; }
+  .btn.gray { background: #fff; color: #5a6675; border-color: #d9e0ea; }
+  .btn.danger { background: #fff; color: #d63b3b; border-color: #f0c9c9; }
+  .btn.sm { padding: 4px 9px; font-size: 12px; }
+  label.btn { display: inline-block; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eef1f6; font-size: 13px; vertical-align: top; }
+  th { color: #7a8797; font-weight: 600; background: #fafbfd; white-space: nowrap; position: sticky; top: 0; }
+  tbody tr:hover { background: #f7f9fc; }
+  .wrap-table { overflow: auto; max-height: 62vh; border: 1px solid #eef1f6; border-radius: 8px; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .dot.fresh { background: #22a06b; }
+  .dot.warn { background: #e0a52e; }
+  .dot.stale { background: #d63b3b; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; background: #eef3ff; color: #2563eb; }
+  .tag.done { background: #e8f7ef; color: #22a06b; }
+  .tag.dead { background: #fdeeee; color: #d63b3b; }
+  .tag.mid { background: #fdf3e3; color: #b57d16; }
+  .muted { color: #93a0b0; }
+  .grid2 { display: grid; grid-template-columns: 110px 1fr 110px 1fr; gap: 10px 12px; align-items: center; }
+  .grid2 label { color: #5a6675; font-size: 13px; text-align: right; }
+  .grid2 .full { grid-column: span 3; }
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(20,28,40,.45); display: none;
+    align-items: flex-start; justify-content: center; z-index: 100; overflow: auto; padding: 40px 12px;
+  }
+  .modal-bg.active { display: flex; }
+  .modal { background: #fff; border-radius: 12px; width: 720px; max-width: 100%; padding: 18px 20px; }
+  .modal h3 { margin: 0 0 16px; font-size: 16px; }
+  .modal .footer { margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end; }
+  .hint { color: #93a0b0; font-size: 12px; line-height: 1.6; }
+  .daily-sec { border: 1px solid #eef1f6; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+  .daily-sec h4 { margin: 0 0 8px; font-size: 14px; color: #2563eb; }
+  .daily-sec ul { margin: 0; padding-left: 20px; }
+  .daily-sec li { line-height: 1.9; font-size: 13px; }
+  .daily-sec .none { color: #93a0b0; font-size: 13px; }
+  .daily-stat { display: flex; gap: 22px; flex-wrap: wrap; font-size: 13px; color: #5a6675; }
+  .daily-stat b { color: #2563eb; font-size: 15px; margin-right: 3px; }
+  .match-score { font-weight: 600; color: #22a06b; }
+  textarea.output { width: 100%; height: 260px; line-height: 1.8; font-size: 14px; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 900px) { .split { grid-template-columns: 1fr; } .grid2 { grid-template-columns: 96px 1fr; } .grid2 .full { grid-column: span 1; } }
+  .imgbox { border: 1px dashed #d9e0ea; border-radius: 8px; padding: 10px; background: #fafbfd; overflow: auto; max-height: 900px; }
+  .imgbox img { max-width: 100%; border: 1px solid #e6eaf0; border-radius: 6px; }
+  .chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #5a6675; cursor: pointer; }
+  .toast {
+    position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%);
+    background: #1f2733; color: #fff; padding: 10px 18px; border-radius: 20px;
+    font-size: 13px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 200;
+  }
+  .toast.show { opacity: .95; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>宠物托运工作台</h1>
+    <div class="sub">台账 · 群发 · 款项 · 日报 · 周报月报　｜　数据保存在本机浏览器，请定期备份</div>
+    <div class="sub" id="storeInfo" style="margin-top:2px"></div>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<nav id="nav"></nav>
+
+<main>
+  <!-- 台账 -->
+  <section class="panel" id="panel-ledger">
+    <div class="subtabs" id="ledgerTabs"></div>
+    <div class="card">
+      <div class="toolbar">
+        <button class="btn" id="btnAddRec">＋ 新增记录</button>
+        <button class="btn ghost" id="btnPasteRec">＋ 粘贴导入</button>
+        <input id="searchBox" placeholder="搜索：城市 / 备注 / 联系方式…" style="width:240px">
+        <select id="statusFilter"></select>
+        <span class="muted" id="ledgerCount"></span>
+      </div>
+      <div class="wrap-table">
+        <table>
+          <thead id="ledgerHead"></thead>
+          <tbody id="ledgerBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 群发 -->
+  <section class="panel" id="panel-broadcast">
+    <div class="card">
+      <h3>群发生成器</h3>
+      <div class="toolbar">
+        <label class="chk"><input type="radio" name="aud" value="carrier" checked> 发给乘机人（宠物订单）</label>
+        <label class="chk"><input type="radio" name="aud" value="client"> 发给甲方（乘机人行程）</label>
+        <span style="flex:1"></span>
+        <select id="bcMode">
+          <option value="full">完整群发（全部在找）</option>
+          <option value="pick">智能精选（按匹配度取前 N 条）</option>
+          <option value="incr">增量群发（今日新增/确认）</option>
+        </select>
+        <input id="bcTopN" type="number" min="5" max="60" value="15" title="精选条数" style="width:62px">
+        <label class="chk"><input type="checkbox" id="bcHeader"> 带抬头</label>
+        <button class="btn" id="btnGenText">生成文案</button>
+      </div>
+      <div class="split">
+        <div>
+          <textarea class="output" id="bcText" placeholder="点击「生成文案」后在此显示，可手动修改…"></textarea>
+          <div class="toolbar" style="margin-top:10px">
+            <button class="btn ghost" id="btnCopyText">复制文案</button>
+            <span class="hint" id="bcCount"></span>
+          </div>
+        </div>
+        <div>
+          <div class="toolbar">
+            <label class="chk"><input type="checkbox" id="bcSplitDir"> 按方向分段（出国 / 回国）</label>
+            <label class="chk"><input type="checkbox" id="bcValidOnly" checked> 仅仍有效</label>
+          </div>
+          <div class="toolbar">
+            <label class="chk"><input type="checkbox" id="bcUseNote"> 附带「此外」说明</label>
+            <input id="bcNote" placeholder="此外说明，如：回国带烟，可提前预约" style="flex:1; min-width:200px">
+          </div>
+          <div class="toolbar">
+            <button class="btn" id="btnGenImg">生成表格图片（去联系方式）</button>
+            <button class="btn ghost" id="btnDownloadImg">下载图片</button>
+            <button class="btn ghost" id="btnCopyImg">复制图片</button>
+          </div>
+          <div class="imgbox" id="bcImgWrap"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 成单与款项 -->
+  <section class="panel" id="panel-deals">
+    <div class="card">
+      <h3>成单与款项跟踪</h3>
+      <div class="subtabs" id="dealDir">
+        <button data-d="all" class="active">全部方向</button>
+        <button data-d="out">出国</button>
+        <button data-d="in">回国</button>
+      </div>
+      <div class="subtabs" id="dealFilter">
+        <button data-f="all" class="active">全部状态</button>
+        <button data-f="todayDeal">今日成交</button>
+        <button data-f="todayDone">今日结单</button>
+        <button data-f="doing">进行中</button>
+        <button data-f="done">已结单</button>
+      </div>
+      <div class="toolbar">
+        <button class="btn" id="btnAddDeal">＋ 新增成单</button>
+        <span class="hint" id="dealTodayHint"></span>
+        <span class="hint">定金 / 尾款可填金额并标记是否已收｜ 尾款「已收」即「已结单」，否则「进行中」</span>
+      </div>
+      <div class="wrap-table">
+        <table>
+          <thead><tr><th>成交日</th><th>方向</th><th>出发日期</th><th>行程路线</th><th>宠物订单</th><th>乘机人</th><th>收款</th><th>成本</th><th>差价</th><th>定金</th><th>尾款</th><th>状态</th><th>结单日</th><th>备注</th><th>资料</th><th>操作</th></tr></thead>
+          <tbody id="dealsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 日报 -->
+  <section class="panel" id="panel-daily">
+    <div class="card">
+      <h3>今日工作记录 · <span id="dailyDate"></span></h3>
+      <div class="toolbar">
+        <button class="btn ghost" id="btnCopyDaily">复制今日日报</button>
+        <span class="hint">数据由台账自动汇总；「今日群发次数」在你点「复制文案」时自动 +1。</span>
+      </div>
+      <div id="dailyBody"></div>
+    </div>
+  </section>
+
+  <!-- 周报 / 月报 -->
+  <section class="panel" id="panel-report">
+    <div class="card">
+      <h3>周报 / 月报 · 数据分析</h3>
+      <div class="subtabs" id="reportRange">
+        <button data-r="week" class="active">本周</button>
+        <button data-r="lastweek">上周</button>
+        <button data-r="month">本月</button>
+        <button data-r="lastmonth">上月</button>
+        <button data-r="all">全部</button>
+      </div>
+      <div class="toolbar">
+        <span class="hint" id="reportPeriod"></span>
+        <span style="flex:1"></span>
+        <button class="btn ghost" id="btnCopyReport">复制报表文案</button>
+      </div>
+      <div id="reportBody"></div>
+    </div>
+  </section>
+
+  <!-- 数据 -->
+  <section class="panel" id="panel-data">
+    <div class="card">
+      <h3>GitHub 云同步（免部署 · 出差换机首选）</h3>
+      <div class="toolbar">
+        <input id="ghToken" type="password" placeholder="粘贴 GitHub Token（只需勾选 gist 权限）" style="min-width:320px">
+        <button class="btn" id="btnGhConnect">连接并创建同步</button>
+        <button class="btn ghost" id="btnGhPush" style="display:none">立即上传</button>
+        <button class="btn ghost" id="btnGhPull" style="display:none">立即拉取</button>
+        <button class="btn gray" id="btnGhOff" style="display:none">断开</button>
+      </div>
+      <div class="hint" id="ghStatus" style="margin:6px 0 2px"></div>
+      <p class="hint">
+        · 不需要服务器、不用买域名：页面放 GitHub Pages，数据存在你自己的<b>私有 Gist</b> 里。<br>
+        · Token 只保存在当前浏览器，不上传任何第三方；Gist 为私有，只有 Token 能读写。<br>
+        · 连接后每次改动<b>自动上传</b>；手机 / 公司电脑打开同一网址、粘贴同一个 Token，会自动拉取最新数据。<br>
+        · 换设备时如果服务器上已有数据，会按「较新时间」自动决定拉取还是上传。
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>自建服务器同步（需要自己部署服务器）</h3>
+      <div class="toolbar">
+        <button class="btn" id="btnSyncLogin">登录</button>
+        <button class="btn ghost" id="btnSyncPull" style="display:none">从服务器拉取</button>
+        <button class="btn ghost" id="btnSyncPush" style="display:none">上传到服务器</button>
+        <button class="btn gray" id="btnSyncLogout" style="display:none">退出登录</button>
+      </div>
+      <div class="hint" id="syncStatus" style="margin:6px 0 2px"></div>
+      <p class="hint">
+        · 把本页部署到你自己的服务器（私域网站），用 <b>https://</b> 打开 → 输入访问密码登录，数据就存在服务器上。<br>
+        · 登录后每次改动会<b>自动上传</b>；换电脑只需打开同一个网址、登录，数据自动跟着走，<b>不用网盘拷贝</b>。<br>
+        · 没部署 / 断网时自动退回<b>本地模式</b>，数据仍存在本机浏览器，不报错、不丢。<br>
+        · 两台机器<b>以「较新时间」为准</b>，会覆盖不合并；出差期间尽量只用一台编辑。
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>粘贴导入（推荐，预览里也能用）</h3>
+      <div class="toolbar">
+        <select id="pasteKind">
+          <option value="order">甲方端（宠物订单，含费用列）</option>
+          <option value="pax">乘客端（乘机人行程）</option>
+          <option value="deal">成单（成交与款项记录）</option>
+        </select>
+        <select id="pasteDir">
+          <option value="out">出国</option>
+          <option value="in">回国</option>
+        </select>
+        <label class="chk" id="pasteAutoWrap"><input type="checkbox" id="pasteAuto" checked> 自动识别方向</label>
+        <button class="btn" id="btnPasteImport">解析并追加</button>
+      </div>
+      <textarea id="pasteArea" style="width:100%;height:170px;font-size:13px;line-height:1.6"
+        placeholder="在 Excel 里选中要导入的单元格 → Ctrl+C 复制 → 粘贴到这里。&#10;可以直接粘贴整块（含「时间/出发地/目的地…」表头，甚至左右两块一起）；没有表头时请取消「自动识别方向」并选择上方的方向。&#10;成单可直接粘贴「导出台账（Excel）」里那张「成单」表的内容。"></textarea>
+      <p class="hint" id="pasteHint">列顺序需为：时间 / 出发地 / 目的地 / 航司要求(或航司) / 备注 / 费用(仅甲方端) / 联系方式。</p>
+    </div>
+
+    <div class="card">
+      <h3>数据备份 / 文件导入导出</h3>
+      <div class="toolbar">
+        <button class="btn ghost" id="btnExportJson">导出备份（JSON）</button>
+        <label class="btn ghost" for="fileJson">导入备份（JSON）</label>
+        <button class="btn ghost" id="btnExportXlsx">导出台账+成单（Excel）</button>
+        <label class="btn ghost" for="fileXlsx">导入台账/成单（Excel）</label>
+        <input type="file" id="fileJson" accept=".json" style="position:absolute;left:-9999px">
+        <input type="file" id="fileXlsx" accept=".xlsx,.xls,.csv" style="position:absolute;left:-9999px">
+      </div>
+      <div class="dropzone" id="dataDrop" style="margin-bottom:12px">
+        <span><b>把 JSON / Excel 文件拖到这里导入</b>（从微信、资源管理器直接拖入即可）</span>
+      </div>
+      <div class="toolbar">
+        <button class="btn gray" id="btnSample">载入示例数据</button>
+        <button class="btn ghost" id="btnSnapshots">恢复快照（最近自动备份）</button>
+        <button class="btn danger" id="btnClear">清空全部数据</button>
+      </div>
+      <p class="hint">
+        · 文件导入会自动识别「甲方端 / 乘客端 / 成单」等表，以及每张表里左右并排的「出国 / 回国」两块；时间列的 Excel 日期数字（如 46305）会自动转成「10月10日」。<br>
+        · 若在 Trae 预览窗口里点「导入台账」跳到空白页，请改用上面的<b>粘贴导入</b>、或把 Excel 文件<b>直接拖到本页</b>，也可以下载 html 后用 Chrome/Edge 打开再导入。<br>
+        · 导入是<b>追加</b>，重复导入同一条会出现多次；建议导入前先「清空全部数据」或导出备份。
+      </p>
+    </div>
+  </section>
+</main>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========================= 基础工具 ========================= */
+const STORAGE_KEY = 'pet_transport_workbench_v1';
+/* 是否运行在预览窗口的 iframe 里（此时原生文件选择器不可用，会跳到空白页） */
+const EMBEDDED = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+const ORDER_STATUS = ['待匹配', '已联系', '已成交', '已失效'];
+const PAX_STATUS = ['可用', '已安排', '已成交', '失效'];
+const DEP_STATUS = ['未收', '已收'];
+const TABS = [
+  { key: 'order-out', label: '宠物方 · 出国', kind: 'order', dir: 'out' },
+  { key: 'order-in',  label: '宠物方 · 回国', kind: 'order', dir: 'in'  },
+  { key: 'pax-out',   label: '乘机人 · 出国', kind: 'pax',   dir: 'out' },
+  { key: 'pax-in',    label: '乘机人 · 回国', kind: 'pax',   dir: 'in'  },
+];
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+/* 本地日期（YYYY-MM-DD）：统一按本机时区计算，避免凌晨数据被算到前一天 */
+function localDateStr(v) {
+  if (!v) return '';
+  if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const d = v instanceof Date ? v : new Date(v);
+  if (isNaN(d)) return '';
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function todayStr() { return localDateStr(new Date()); }
+function cnDate(iso) {
+  const d = new Date((iso || todayStr()) + 'T00:00:00');
+  if (isNaN(d)) return '';
+  return (d.getMonth() + 1) + '月' + d.getDate() + '日';
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+function daysSince(d) {
+  if (!d) return Infinity;
+  const t = new Date(/^\d{4}-\d{2}-\d{2}$/.test(d) ? d + 'T00:00:00' : d);
+  if (isNaN(t)) return Infinity;
+  return Math.floor((Date.now() - t.getTime()) / 86400000);
+}
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 1800);
+}
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch (e) {}
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = t; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok = document.execCommand('copy'); document.body.removeChild(ta); return ok;
+  } catch (e) { return false; }
+}
+
+/* ========================= 状态与存储 ========================= */
+let state = {
+  orders: [], passengers: [], deals: [], sendLog: [],
+  settings: { customNote: '回国带烟，可提前预约', freshWarn: 7, freshStale: 30 },
+  activeTab: 'order-out',
+  savedAt: '',        // 数据最近一次改动时间（与服务器比对用，谁新用谁）
+};
+let ui = { search: '', status: '', dealFilter: 'all', dealDir: 'all', reportRange: 'week' };
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      state.orders = d.orders || [];
+      state.passengers = d.passengers || [];
+      state.deals = d.deals || [];
+      state.sendLog = d.sendLog || [];
+      state.settings = Object.assign(state.settings, d.settings || {});
+      state.activeTab = d.activeTab || 'order-out';
+      state.savedAt = d.savedAt || '';
+      if (migrateDeals()) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+    }
+  } catch (e) { console.warn('读取数据失败', e); }
+}
+function save() {
+  state.savedAt = new Date().toISOString();
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  catch (e) { toast('保存失败，请导出备份'); }
+  scheduleSync();
+}
+
+/* ========== 自动本地快照：数据每次变动存一版，可回滚 ========== */
+const SNAP_KEY = 'pet_transport_workbench_snap_v1';
+const SNAP_MAX = 15;
+function dataSig() {
+  return state.orders.map(r => r.id + '|' + r.updatedAt + '|' + r.status).join(',') + '#' +
+    state.passengers.map(r => r.id + '|' + r.updatedAt + '|' + r.status).join(',') + '#' +
+    state.deals.length;
+}
+function takeSnapshot() {
+  try {
+    const sig = dataSig();
+    const arr = readSnapshots();
+    if (arr.length && arr[arr.length - 1].sig === sig) return;   // 内容没变，不重复存
+    arr.push({ t: Date.now(), sig, orders: state.orders, passengers: state.passengers, deals: state.deals });
+    while (arr.length > SNAP_MAX) arr.shift();
+    localStorage.setItem(SNAP_KEY, JSON.stringify(arr));
+  } catch (e) { /* 快照失败不影响主流程 */ }
+}
+function readSnapshots() {
+  try { const a = JSON.parse(localStorage.getItem(SNAP_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+  catch (e) { return []; }
+}
+function openSnapshots() {
+  const all = readSnapshots();            // 旧 → 新
+  const view = all.slice().reverse();     // 显示：新 → 旧
+  const rows = view.length ? view.map((s, i) =>
+    `<tr><td>${new Date(s.t).toLocaleString('zh-CN', { hour12: false })}</td>
+      <td>${(s.orders || []).length} 订单 / ${(s.passengers || []).length} 乘机人</td>
+      <td><button class="btn sm" data-snap="${all.length - 1 - i}">恢复这一版</button></td></tr>`
+  ).join('') : `<tr><td colspan="3" class="muted" style="padding:18px">暂无快照（有数据变动后会自动生成）</td></tr>`;
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <h3>恢复快照</h3>
+    <p class="hint">数据每次变动会自动存一版，最多保留最近 ${SNAP_MAX} 版。恢复会<b>覆盖当前数据</b>，操作前建议先「导出备份」。</p>
+    <div class="wrap-table" style="max-height:320px"><table>
+      <thead><tr><th>时间</th><th>内容</th><th>操作</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="footer"><button class="btn gray" id="formCancel">关闭</button></div>`;
+  document.getElementById('modalBg').classList.add('active');
+  document.getElementById('formCancel').onclick = closeModal;
+  modal.querySelectorAll('[data-snap]').forEach(b => b.onclick = () => {
+    const s = readSnapshots()[+b.dataset.snap];
+    if (!s) return;
+    if (!confirm(`恢复到 ${new Date(s.t).toLocaleString('zh-CN', { hour12: false })} 这一版？当前数据将被覆盖。`)) return;
+    state.orders = s.orders || [];
+    state.passengers = s.passengers || [];
+    state.deals = s.deals || [];
+    closeModal(); afterChange();
+    toast('已恢复到所选快照');
+  });
+}
+/* ========== 云端同步：数据存到自己的服务器（私域网站） ==========
+   服务端只要实现 4 个接口（见 cloud/server.js 与 cloud/worker.js）：
+     POST /api/login  {password}   → 200 并下发登录 Cookie
+     POST /api/logout              → 清除登录
+     GET  /api/state               → { ok:true, savedAt, data }
+     POST /api/state  {data}       → { ok:true, savedAt }
+   不是通过服务器打开时（file:// 等）自动进入「本地模式」，只写 localStorage。 */
+const SYNC = { online: false, authed: false, lastAt: '', timer: null };
+
+async function api(path, opts) {
+  return fetch(path, Object.assign(
+    { credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } }, opts || {}));
+}
+async function apiJson(path, opts) {
+  const r = await api(path, opts);
+  if (r.status === 401) { const e = new Error('未登录'); e.code = 401; throw e; }
+  if (!r.ok) { const e = new Error('HTTP ' + r.status); e.code = r.status; throw e; }
+  let j = null;
+  try { j = await r.json(); } catch (e) { throw new Error('这个地址不是工作台服务端'); }
+  if (!j || j.ok !== true) throw new Error('这个地址不是工作台服务端');
+  return j;
+}
+function setSyncUI() {
+  const st = document.getElementById('syncStatus');
+  if (!st) return;
+  try { renderStoreInfo(); } catch (e) {}
+  const on = SYNC.online && SYNC.authed;
+  ['btnSyncPush', 'btnSyncPull', 'btnSyncLogout'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = on ? '' : 'none';
+  });
+  const lg = document.getElementById('btnSyncLogin');
+  if (lg) lg.style.display = (SYNC.online && !SYNC.authed) ? '' : 'none';
+  if (!SYNC.online) {
+    st.innerHTML = '<b>本地模式</b>：当前不是通过服务器地址打开，数据只存在这台机器的浏览器里。把本页部署到服务器后，用 https:// 打开就会自动同步。';
+    return;
+  }
+  if (!SYNC.authed) { st.innerHTML = '<b>已连上服务器，但还没登录。</b>点「登录」输入访问密码后即可同步。'; return; }
+  st.innerHTML = `已登录 · 改动后自动上传　｜　上次同步：${fmtTime(SYNC.lastAt)}`;
+}
+function scheduleSync() {
+  if (!SYNC.online || !SYNC.authed) return;
+  clearTimeout(SYNC.timer);
+  SYNC.timer = setTimeout(() => { pushState(true); }, 900);
+}
+async function pushState(silent) {
+  if (!SYNC.online || !SYNC.authed) return false;
+  try {
+    const j = await apiJson('/api/state', { method: 'POST', body: JSON.stringify({ data: state }) });
+    SYNC.lastAt = j.savedAt || new Date().toISOString();
+    persistLocal(); setSyncUI();
+    if (!silent) toast('已上传到服务器');
+    return true;
+  } catch (e) {
+    if (e.code === 401) { SYNC.authed = false; setSyncUI(); if (!silent) showLogin(); return false; }
+    if (!silent) toast('上传失败：' + e.message);
+    return false;
+  }
+}
+async function pullState(silent) {
+  if (!SYNC.online || !SYNC.authed) return false;
+  try {
+    const j = await apiJson('/api/state');
+    const remote = j.data;
+    if (!remote || !Array.isArray(remote.orders)) { if (!silent) toast('服务器上还没有数据'); return false; }
+    const srvAt = remote.savedAt || j.savedAt || '';
+    SYNC.lastAt = j.savedAt || srvAt;
+    if (srvAt && srvAt > (state.savedAt || '')) {
+      applyPayload(remote); afterChange(); setSyncUI();
+      if (!silent) toast('已从服务器拉取最新数据');
+    } else {
+      setSyncUI(); await pushState(true);
+      if (!silent) toast('本机数据较新，已上传到服务器');
+    }
+    return true;
+  } catch (e) {
+    if (e.code === 401) { SYNC.authed = false; setSyncUI(); if (!silent) showLogin(); return false; }
+    if (!silent) toast('拉取失败：' + e.message);
+    return false;
+  }
+}
+function showLogin() {
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <h3>登录私有工作台</h3>
+    <p class="hint">输入访问密码（服务端环境变量 APP_PASSWORD 设置的那个）。登录成功后数据会自动与服务器同步。</p>
+    <div class="grid2"><label>访问密码</label><input type="password" id="pwInput" placeholder="请输入访问密码"></div>
+    <div class="footer"><button class="btn gray" id="pwCancel">取消</button><button class="btn" id="pwOk">登录</button></div>`;
+  document.getElementById('modalBg').classList.add('active');
+  document.getElementById('pwCancel').onclick = closeModal;
+  document.getElementById('pwOk').onclick = doLogin;
+  const inp = document.getElementById('pwInput');
+  if (inp) { inp.focus(); inp.onkeydown = e => { if (e.key === 'Enter') doLogin(); }; }
+}
+async function doLogin() {
+  const el = document.getElementById('pwInput');
+  const pw = el ? el.value : '';
+  if (!pw) { toast('请输入密码'); return; }
+  try {
+    await apiJson('/api/login', { method: 'POST', body: JSON.stringify({ password: pw }) });
+    SYNC.online = true; SYNC.authed = true;
+    closeModal(); setSyncUI();
+    toast('登录成功');
+    await pullState(true);
+  } catch (e) {
+    toast(e.code === 401 ? '密码不对' : '登录失败：' + e.message);
+  }
+}
+async function logout() {
+  try { await api('/api/logout', { method: 'POST' }); } catch (e) {}
+  SYNC.authed = false; setSyncUI();
+  toast('已退出登录（数据仍在服务器上）');
+}
+/* 打开页面时：能连服务器就同步（谁新用谁），连不上就本地模式 */
+async function syncInit() {
+  if (location.protocol !== 'http:' && location.protocol !== 'https:') { SYNC.online = false; setSyncUI(); return; }
+  try {
+    const j = await apiJson('/api/state');
+    SYNC.online = true; SYNC.authed = true;
+    const remote = j.data;
+    const srvAt = (remote && remote.savedAt) || j.savedAt || '';
+    SYNC.lastAt = j.savedAt || srvAt;
+    if (remote && Array.isArray(remote.orders) && srvAt && srvAt > (state.savedAt || '')) {
+      applyPayload(remote); afterChange();
+    } else {
+      await pushState(true);
+    }
+    setSyncUI();
+  } catch (e) {
+    if (e.code === 401) { SYNC.online = true; SYNC.authed = false; setSyncUI(); return; }
+    SYNC.online = false; setSyncUI();
+  }
+}
+
+/* ================= GitHub 云同步（免部署：GitHub Pages + 私有 Gist） ================= */
+const GH_KEY_TOKEN = 'pet_gh_token';
+const GH_KEY_GIST = 'pet_gh_gist';
+const GH_FILE = 'pet-workbench-data.json';
+const GH = {
+  token: localStorage.getItem(GH_KEY_TOKEN) || '',
+  gist: localStorage.getItem(GH_KEY_GIST) || '',
+  lastAt: '', busy: false, timer: null, suppress: false
+};
+
+function ghUI(msg) {
+  const st = document.getElementById('ghStatus');
+  if (!st) return;
+  const on = !!(GH.token && GH.gist);
+  ['btnGhPush', 'btnGhPull', 'btnGhOff'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none';
+  });
+  const inp = document.getElementById('ghToken');
+  if (inp) inp.style.display = on ? 'none' : '';
+  const cb = document.getElementById('btnGhConnect');
+  if (cb) cb.style.display = on ? 'none' : '';
+  if (msg) { st.textContent = msg; return; }
+  if (!GH.token) st.innerHTML = '<b>未连接</b>：粘贴 GitHub Token 后点「连接并创建同步」。';
+  else if (!GH.gist) st.innerHTML = '<b>Token 已保存</b>，但还没找到同步数据，点「连接并创建同步」。';
+  else st.innerHTML = '已连接 GitHub · 改动后自动上传　｜　上次同步：' + fmtTime(GH.lastAt);
+}
+
+async function ghApi(path, opts) {
+  const r = await fetch('https://api.github.com' + path, Object.assign({}, opts, {
+    headers: Object.assign({
+      Authorization: 'Bearer ' + GH.token,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    }, (opts && opts.headers) || {})
+  }));
+  if (r.status === 401) throw new Error('Token 无效或没有 gist 权限');
+  if (r.status === 403) throw new Error('GitHub 拒绝访问（可能触发限流，稍后重试）');
+  if (r.status === 404) throw new Error('同步数据不存在（Gist 可能被删除）');
+  if (!r.ok) throw new Error('GitHub 接口错误 HTTP ' + r.status);
+  return r.json();
+}
+function ghPayload() {
+  return JSON.stringify({ app: 'pet-workbench', savedAt: state.savedAt || '', data: state });
+}
+async function ghFindGist() {
+  const list = await ghApi('/gists?per_page=100');
+  const hit = (list || []).find(g => g.files && g.files[GH_FILE]);
+  return hit ? hit.id : '';
+}
+async function ghCreateGist() {
+  const j = await ghApi('/gists', {
+    method: 'POST', body: JSON.stringify({
+      description: '宠物托运工作台 · 自动同步（请勿删除）',
+      public: false,
+      files: { [GH_FILE]: { content: ghPayload() } }
+    })
+  });
+  return j.id;
+}
+async function ghPush(silent) {
+  if (!GH.token || !GH.gist) return false;
+  try {
+    const j = await ghApi('/gists/' + GH.gist, {
+      method: 'PATCH', body: JSON.stringify({ files: { [GH_FILE]: { content: ghPayload() } } })
+    });
+    GH.lastAt = j.updated_at || new Date().toISOString();
+    ghUI();
+    if (!silent) toast('已上传到 GitHub');
+    return true;
+  } catch (e) {
+    ghUI('上传失败：' + e.message);
+    if (!silent) toast('上传失败：' + e.message);
+    return false;
+  }
+}
+async function ghPull(manual) {
+  if (!GH.token || !GH.gist) return false;
+  try {
+    const j = await ghApi('/gists/' + GH.gist);
+    const f = j.files && j.files[GH_FILE];
+    if (!f) { await ghPush(true); return false; }
+    let txt = f.content;
+    if (f.truncated && f.raw_url) {
+      const r = await fetch(f.raw_url, { headers: { Authorization: 'Bearer ' + GH.token } });
+      if (r.ok) txt = await r.text();
+    }
+    let remote = null;
+    try { remote = JSON.parse(txt); } catch (e) {}
+    const data = remote && remote.data;
+    if (!data || !Array.isArray(data.orders)) { await ghPush(true); return false; }
+    GH.lastAt = j.updated_at || remote.savedAt || '';
+    const srvAt = remote.savedAt || data.savedAt || '';
+    if (srvAt && srvAt > (state.savedAt || '')) {
+      GH.suppress = true;
+      applyPayload(data);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      afterChange();
+      GH.suppress = false;
+      await ghPush(true);   // 把拉取后的时间戳同步回 Gist，避免另一台设备用旧数据覆盖
+      ghUI();
+      toast(manual ? '已从 GitHub 拉取最新数据' : '已同步 GitHub 上的最新数据');
+      return true;
+    }
+    await ghPush(true);
+    if (manual) toast('本机数据较新，已上传到 GitHub');
+    return false;
+  } catch (e) {
+    ghUI('同步失败：' + e.message);
+    if (manual) toast('同步失败：' + e.message);
+    return false;
+  }
+}
+function ghSchedule() {
+  if (!GH.token || !GH.gist || GH.suppress) return;
+  clearTimeout(GH.timer);
+  GH.timer = setTimeout(() => { ghPush(true); }, 1500);
+}
+async function ghConnect() {
+  const inp = document.getElementById('ghToken');
+  const t = ((inp && inp.value) || '').trim();
+  if (!t) { toast('请先粘贴 GitHub Token'); return; }
+  if (!/^ghp_[A-Za-z0-9]+$/.test(t)) {
+    toast('请用 Classic Token（以 ghp_ 开头）；Fine-grained Token 不支持 Gist');
+    return;
+  }
+  GH.token = t;
+  try { localStorage.setItem(GH_KEY_TOKEN, t); } catch (e) {}
+  ghUI('正在连接 GitHub…');
+  try {
+    GH.gist = GH.gist || localStorage.getItem(GH_KEY_GIST) || await ghFindGist();
+    if (!GH.gist) GH.gist = await ghCreateGist();
+    try { localStorage.setItem(GH_KEY_GIST, GH.gist); } catch (e) {}
+    await ghPull(false);
+    ghUI();
+  } catch (e) {
+    GH.token = ''; GH.gist = '';
+    try { localStorage.removeItem(GH_KEY_TOKEN); localStorage.removeItem(GH_KEY_GIST); } catch (e2) {}
+    ghUI('连接失败：' + e.message);
+    toast('连接失败：' + e.message);
+  }
+}
+function ghDisconnect() {
+  if (!confirm('断开后本机数据保留，但不再自动同步。确定断开？')) return;
+  GH.token = ''; GH.gist = ''; GH.lastAt = '';
+  GH.suppress = false;
+  try { localStorage.removeItem(GH_KEY_TOKEN); localStorage.removeItem(GH_KEY_GIST); } catch (e) {}
+  const i = document.getElementById('ghToken'); if (i) i.value = '';
+  ghUI();
+  toast('已断开 GitHub 同步');
+}
+function ghInit() {
+  if (!document.getElementById('ghStatus')) return;
+  ghUI();
+  if (GH.token && GH.gist) ghPull(true);
+}
+
+function persistLocal() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {} }
+function applyPayload(d) {
+  state.orders = d.orders || [];
+  state.passengers = d.passengers || [];
+  state.deals = d.deals || [];
+  state.sendLog = d.sendLog || [];
+  state.settings = Object.assign(state.settings, d.settings || {});
+  state.activeTab = d.activeTab || state.activeTab;
+  state.savedAt = d.savedAt || new Date().toISOString();
+}
+function fmtTime(iso) {
+  return iso ? new Date(iso).toLocaleString('zh-CN', { hour12: false }) : '—';
+}
+function renderStoreInfo() {
+  const el = document.getElementById('storeInfo');
+  if (!el) return;
+  let where;
+  if (location.protocol === 'file:') where = '本地文件打开（file://）';
+  else if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') where = '预览 / 本地服务（' + location.host + '）';
+  else where = location.host || location.protocol;
+  const snaps = readSnapshots();
+  const last = snaps.length ? new Date(snaps[snaps.length - 1].t).toLocaleString('zh-CN', { hour12: false }) : '—';
+  const syncTxt = !SYNC.online ? '云端：本地模式'
+    : (SYNC.authed ? '云端：已登录' : '云端：未登录');
+  el.textContent = `存储位置：${where}　｜　${state.orders.length} 订单 / ${state.passengers.length} 乘机人　｜　最近快照：${last}　｜　${syncTxt}`;
+}
+function listOf(kind) { return kind === 'order' ? state.orders : state.passengers; }
+function dirLabel(dir) { return dir === 'out' ? '出国' : '回国'; }
+function freshLevel(rec) {
+  const days = daysSince(rec.confirmedAt || rec.createdAt);
+  const w = state.settings.freshWarn, s = state.settings.freshStale;
+  if (days <= w) return { level: 'fresh', days };
+  if (days <= s) return { level: 'warn', days };
+  return { level: 'stale', days };
+}
+function isActive(rec, kind) {
+  if (kind === 'order') return !['已成交', '已失效'].includes(rec.status);
+  return !['已成交', '失效'].includes(rec.status);
+}
+function statusTagClass(st) {
+  if (['已成交'].includes(st)) return 'done';
+  if (['已失效', '失效'].includes(st)) return 'dead';
+  if (['已联系', '已安排'].includes(st)) return 'mid';
+  return '';
+}
+
+/* ========================= 导航 ========================= */
+function renderNav() {
+  const nav = document.getElementById('nav');
+  const items = [
+    { id: 'ledger', label: '台账' },
+    { id: 'broadcast', label: '群发' },
+    { id: 'deals', label: '成单与款项' },
+    { id: 'daily', label: '日报' },
+    { id: 'report', label: '周报/月报' },
+    { id: 'data', label: '数据' },
+  ];
+  nav.innerHTML = items.map(i =>
+    `<button data-panel="${i.id}" class="${i.id === ui.panel ? 'active' : ''}">${i.label}</button>`
+  ).join('');
+  nav.querySelectorAll('button').forEach(b =>
+    b.onclick = () => { ui.panel = b.dataset.panel; renderNav(); renderPanels(); }
+  );
+}
+function renderPanels() {
+  ['ledger', 'broadcast', 'deals', 'daily', 'report', 'data'].forEach(p => {
+    document.getElementById('panel-' + p).classList.toggle('active', p === ui.panel);
+  });
+  if (ui.panel === 'ledger') renderLedger();
+  if (ui.panel === 'deals') renderDeals();
+  if (ui.panel === 'daily') renderDaily();
+  if (ui.panel === 'report') renderReport();
+}
+
+/* 今日新增：当天新录入的，或当天新确认时效的，都算「今日新增」 */
+function isTodayNew(rec) {
+  const t = todayStr();
+  return localDateStr(rec.createdAt) === t || localDateStr(rec.confirmedAt) === t;
+}
+/* ========================= 概览统计 ========================= */
+function renderStats() {
+  const newToday = [...state.orders, ...state.passengers].filter(isTodayNew).length;
+  const pending = state.orders.filter(r => r.status === '待匹配').length;
+  let needCheck = 0;
+  [...state.orders, ...state.passengers].forEach(r => { if (freshLevel(r).level !== 'fresh') needCheck++; });
+  document.getElementById('stats').innerHTML =
+    `<span><b>${state.orders.length}</b>条宠物订单</span>` +
+    `<span><b>${state.passengers.length}</b>条乘机人行程</span>` +
+    `<span><b>${newToday}</b>今日新增/确认</span>` +
+    `<span><b>${pending}</b>待匹配</span>` +
+    `<span><b>${needCheck}</b>待确认</span>`;
+  renderStoreInfo();
+}
+
+/* ========================= 台账 ========================= */
+function renderLedgerTabs() {
+  const box = document.getElementById('ledgerTabs');
+  box.innerHTML = TABS.map(t =>
+    `<button data-tab="${t.key}" class="${t.key === state.activeTab ? 'active' : ''}">${t.label}</button>`
+  ).join('');
+  box.querySelectorAll('button').forEach(b =>
+    b.onclick = () => { state.activeTab = b.dataset.tab; ui.search = ''; ui.status = ''; save(); renderLedger(); }
+  );
+}
+function currentTab() { return TABS.find(t => t.key === state.activeTab) || TABS[0]; }
+
+function renderLedger() {
+  renderLedgerTabs();
+  const tab = currentTab();
+  const isOrder = tab.kind === 'order';
+  const heads = isOrder
+    ? ['时间', '出发地', '目的地', '航司要求', '备注', '费用', '联系方式', '状态', '最后确认', '操作']
+    : ['时间', '出发地', '目的地', '航司', '备注', '联系方式', '状态', '最后确认', '操作'];
+  document.getElementById('ledgerHead').innerHTML =
+    '<tr>' + heads.map(h => `<th>${h}</th>`).join('') + '</tr>';
+
+  // 状态筛选
+  const stList = isOrder ? ORDER_STATUS : PAX_STATUS;
+  const sel = document.getElementById('statusFilter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">全部状态</option>' + stList.map(s => `<option>${s}</option>`).join('');
+  sel.value = stList.includes(cur) ? cur : '';
+
+  const sb = document.getElementById('searchBox');
+  if (sb.value !== ui.search) sb.value = ui.search;
+
+  let recs = listOf(tab.kind).filter(r => r.dir === tab.dir);
+  if (ui.status) recs = recs.filter(r => r.status === ui.status);
+  if (ui.search) {
+    const q = ui.search.toLowerCase();
+    recs = recs.filter(r => ['timeText', 'from', 'to', 'airline', 'note', 'contact', 'fee']
+      .some(k => String(r[k] || '').toLowerCase().includes(q)));
+  }
+  recs = sortRecs(recs);
+
+  document.getElementById('ledgerCount').textContent = `共 ${recs.length} 条`;
+
+  const body = document.getElementById('ledgerBody');
+  if (!recs.length) {
+    body.innerHTML = `<tr><td colspan="10" class="muted" style="padding:24px;text-align:center">暂无记录，点「＋ 新增记录」开始录入</td></tr>`;
+    return;
+  }
+  body.innerHTML = recs.map(r => {
+    const f = freshLevel(r);
+    const cls = statusTagClass(r.status);
+    const cells = isOrder ? [
+      esc(r.timeText), esc(r.from), esc(r.to), esc(r.airline), esc(r.note),
+      esc(r.fee), esc(r.contact),
+      `<span class="tag ${cls}">${esc(r.status)}</span>`,
+      `<span class="dot ${f.level}"></span>${esc(r.confirmedAt || '-')}`,
+    ] : [
+      esc(r.timeText), esc(r.from), esc(r.to), esc(r.airline), esc(r.note),
+      esc(r.contact),
+      `<span class="tag ${cls}">${esc(r.status)}</span>`,
+      `<span class="dot ${f.level}"></span>${esc(r.confirmedAt || '-')}`,
+    ];
+    const ops = `<button class="btn sm" data-act="match" data-id="${r.id}">匹配</button>
+      <button class="btn sm ghost" data-act="edit" data-id="${r.id}">改</button>
+      <button class="btn sm gray" data-act="confirm" data-id="${r.id}">今日已确认</button>
+      <button class="btn sm danger" data-act="del" data-id="${r.id}">删</button>`;
+    return '<tr>' + cells.map((c, i) => i >= cells.length - 2 ? `<td>${c}</td>` : `<td>${c || '<span class="muted">-</span>'}</td>`).join('') + `<td>${ops}</td></tr>`;
+  }).join('');
+
+  body.querySelectorAll('button[data-act]').forEach(b => {
+    b.onclick = () => {
+      const id = b.dataset.id;
+      if (b.dataset.act === 'edit') openForm(tab.kind, tab.dir, id);
+      else if (b.dataset.act === 'match') {
+        const rec = listOf(tab.kind).find(x => x.id === id);
+        if (rec) openMatch(rec, tab.kind);
+      }
+      else if (b.dataset.act === 'del') {
+        if (confirm('确定删除这条记录？')) {
+          const arr = listOf(tab.kind);
+          const i = arr.findIndex(x => x.id === id);
+          if (i >= 0) arr.splice(i, 1);
+          save(); afterChange();
+        }
+      } else if (b.dataset.act === 'confirm') {
+        const arr = listOf(tab.kind);
+        const rec = arr.find(x => x.id === id);
+        if (rec) { rec.confirmedAt = todayStr(); rec.updatedAt = new Date().toISOString(); save(); afterChange(); toast('已标记为今日确认'); }
+      }
+    };
+  });
+}
+
+function afterChange() { save(); takeSnapshot(); renderStats(); renderPanels(); ghSchedule(); }
+
+/* ========================= 表单弹窗 ========================= */
+function fieldDefs(kind) {
+  if (kind === 'order') return [
+    { n: 'timeText', l: '时间', t: 'text', ph: '如：10月中 / 10月25日 / 11月6日后' },
+    { n: 'from', l: '出发地', t: 'text', ph: '如：上海 / 广州 / 国内(不限)' },
+    { n: 'to', l: '目的地', t: 'text', ph: '如：纽约 / 纽约/波士顿' },
+    { n: 'airline', l: '航司要求', t: 'text', ph: '如：加航 / 法航' },
+    { n: 'note', l: '备注', t: 'text', ph: '如：到巴黎后乘坐欧洲之星到伦敦' },
+    { n: 'fee', l: '费用', t: 'text', ph: '如：3500' },
+    { n: 'contact', l: '联系方式', t: 'text', ph: '宠物方备注名 / 微信' },
+    { n: 'status', l: '状态', t: 'select', opts: ORDER_STATUS },
+    { n: 'dateFrom', l: '日期从(可空)', t: 'date' },
+    { n: 'dateTo', l: '日期到(可空)', t: 'date' },
+    { n: 'confirmedAt', l: '最后确认', t: 'date' },
+  ];
+  return [
+    { n: 'timeText', l: '时间', t: 'text', ph: '如：10月8日 / 10月下' },
+    { n: 'from', l: '出发地', t: 'text', ph: '如：上海 / 洛杉矶' },
+    { n: 'to', l: '目的地', t: 'text', ph: '如：温哥华 / 回国' },
+    { n: 'airline', l: '航司', t: 'text', ph: '如：加航 / 南航直飞' },
+    { n: 'note', l: '备注', t: 'text' },
+    { n: 'contact', l: '联系方式', t: 'text', ph: '乘机人备注名' },
+    { n: 'status', l: '状态', t: 'select', opts: PAX_STATUS },
+    { n: 'dateFrom', l: '日期从(可空)', t: 'date' },
+    { n: 'dateTo', l: '日期到(可空)', t: 'date' },
+    { n: 'confirmedAt', l: '最后确认', t: 'date' },
+  ];
+}
+
+function openForm(kind, dir, id) {
+  const defs = fieldDefs(kind);
+  const arr = listOf(kind);
+  const rec = id ? arr.find(x => x.id === id) : null;
+  const title = (id ? '编辑' : '新增') + (kind === 'order' ? '宠物订单' : '乘机人行程') + ' · ' + dirLabel(dir);
+
+  let html = `<h3>${title}</h3><div class="grid2" id="formGrid">`;
+  defs.forEach(d => {
+    const v = rec ? (rec[d.n] || '') : (d.n === 'status' ? d.opts[0] : (d.n === 'confirmedAt' ? todayStr() : ''));
+    if (d.t === 'select') {
+      html += `<label>${d.l}</label><select data-n="${d.n}">` +
+        d.opts.map(o => `<option ${o === v ? 'selected' : ''}>${o}</option>`).join('') + '</select>';
+    } else {
+      html += `<label>${d.l}</label><input data-n="${d.n}" type="${d.t}" placeholder="${d.ph || ''}" value="${esc(v)}">`;
+    }
+  });
+  html += `</div>
+    <div class="footer">
+      <button class="btn gray" id="formCancel">取消</button>
+      <button class="btn" id="formSave">保存</button>
+    </div>`;
+  const modal = document.getElementById('modal');
+  modal.innerHTML = html;
+  document.getElementById('modalBg').classList.add('active');
+  document.getElementById('formCancel').onclick = closeModal;
+  document.getElementById('formSave').onclick = () => {
+    const data = {};
+    modal.querySelectorAll('[data-n]').forEach(el => { data[el.dataset.n] = el.value.trim(); });
+    if (!data.timeText && !data.from && !data.to) { toast('至少填写「时间 / 出发地 / 目的地」'); return; }
+    const now = new Date().toISOString();
+    if (rec) {
+      Object.assign(rec, data, { updatedAt: now });
+      if (!data.confirmedAt) rec.confirmedAt = rec.confirmedAt || todayStr();
+    } else {
+      data.id = uid(); data.dir = dir; data.createdAt = now; data.updatedAt = now;
+      if (!data.confirmedAt) data.confirmedAt = todayStr();
+      arr.push(data);
+    }
+    closeModal(); afterChange(); toast('已保存');
+  };
+}
+function closeModal() {
+  const m = document.getElementById('modal');
+  m.ondragenter = m.ondragover = m.ondragleave = m.ondrop = null;
+  document.getElementById('modalBg').classList.remove('active');
+}
+
+/* ========================= 群发生成 ========================= */
+function audienceKind() {
+  return document.querySelector('input[name=aud]:checked').value === 'carrier' ? 'order' : 'pax';
+}
+function currentAudience() { return document.querySelector('input[name=aud]:checked').value; }
+
+function buildLine(kind, r) {
+  const parts = [];
+  if (r.timeText) parts.push(r.timeText);
+  parts.push(r.from || '国内');
+  if (r.to) parts.push(r.to);
+  if (r.airline) parts.push(r.airline);
+  if (r.note) parts.push('(' + r.note + ')');
+  if (kind === 'order' && r.fee) parts.push(r.fee);
+  return parts.join(' ');
+}
+/* 时间排序：把「精确日期 / 上旬·中·下旬·底 等模糊词」折算成一个可比较的时间点。
+   精确日期优先；同月同日时，精确日期排在模糊词前面。区间（如「10月底11月初」）按末段排。 */
+const SEG_DAY = { '上旬': 5, '初': 5, '中旬': 15, '中': 15, '下旬': 25, '下': 25, '月底': 31, '底': 31, '月末': 31, '末': 31 };
+function estDateKey(rec) {
+  if (rec.dateFrom) {
+    const m = String(rec.dateFrom).match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return { val: (+m[2]) * 100 + (+m[3]), precise: true };
+  }
+  const t = String(rec.timeText || '');
+  // 月 + 日（可带 日/号/左右/前后）：如 10月15日、10月15号左右、10月20左右、11月6日后
+  const md = t.match(/(\d{1,2})月\s*(\d{1,2})\s*(日|号)?\s*(左右|前后)?/);
+  if (md) return { val: (+md[1]) * 100 + (+md[2]), precise: !md[4] };
+  const mm = t.match(/(\d{1,2})[./\-](\d{1,2})/);
+  if (mm) return { val: (+mm[1]) * 100 + (+mm[2]), precise: true };
+  const re = /(\d{1,2})月\s*(上旬|中旬|下旬|月底|月末|初|中|下|底|末)?/g;
+  const anchors = [];
+  let a;
+  while ((a = re.exec(t))) anchors.push((+a[1]) * 100 + (SEG_DAY[a[2]] || 15));
+  if (anchors.length) return { val: anchors[anchors.length - 1], precise: false };
+  return null;
+}
+function sortRecs(recs) {
+  return recs.slice().sort((a, b) => {
+    const ka = estDateKey(a), kb = estDateKey(b);
+    if (!ka && !kb) return (a.createdAt || '').localeCompare(b.createdAt || '');
+    if (!ka) return 1;
+    if (!kb) return -1;
+    if (ka.val !== kb.val) return ka.val - kb.val;
+    if (ka.precise !== kb.precise) return ka.precise ? -1 : 1;
+    return (a.createdAt || '').localeCompare(b.createdAt || '');
+  });
+}
+/* 匹配潜力：能匹配上的候选越多、匹配度越高，越值得优先群发 */
+function matchPotential(rec, kind) {
+  const cands = matchCandidates(rec, kind);
+  const best = cands.length ? cands[0].score : 0;
+  const cnt = cands.filter(c => c.score >= 0.5).length;
+  return best * 0.6 + Math.min(cnt, 6) / 6 * 0.4;
+}
+function pickBroadcastSet(recs, kind, mode) {
+  if (mode === 'incr') {
+    return recs.filter(isTodayNew);
+  }
+  if (mode === 'pick') {
+    const n = Math.max(5, Math.min(60, parseInt(document.getElementById('bcTopN').value, 10) || 15));
+    return recs.slice().sort((a, b) => matchPotential(b, kind) - matchPotential(a, kind)).slice(0, n);
+  }
+  return recs;
+}
+function modeLabel(mode) { return mode === 'incr' ? '今日新增/确认' : mode === 'pick' ? '精选推荐' : '全部在找'; }
+function buildText() {
+  const kind = audienceKind();
+  const aud = currentAudience();
+  const mode = document.getElementById('bcMode').value;
+  const validOnly = document.getElementById('bcValidOnly').checked;
+  const splitDir = document.getElementById('bcSplitDir').checked;
+  const useNote = document.getElementById('bcUseNote').checked;
+  const useHeader = document.getElementById('bcHeader').checked;
+  const noteTxt = document.getElementById('bcNote').value.trim();
+
+  let recs = (kind === 'order' ? state.orders : state.passengers).slice();
+  if (validOnly) recs = recs.filter(r => isActive(r, kind));
+  recs = pickBroadcastSet(recs, kind, mode);
+
+  const head = (aud === 'carrier' ? '甲方端' : '乘客端') + ' · ' + modeLabel(mode) + '（' + cnDate(todayStr()) + '）';
+  const lines = [];
+  if (splitDir) {
+    ['out', 'in'].forEach(d => {
+      const sub = sortRecs(recs.filter(r => r.dir === d));
+      if (sub.length) {
+        lines.push('【' + dirLabel(d) + '】');
+        sub.forEach(r => lines.push(buildLine(kind, r)));
+        lines.push('');
+      }
+    });
+    if (lines[lines.length - 1] === '') lines.pop();
+  } else {
+    sortRecs(recs).forEach(r => lines.push(buildLine(kind, r)));
+  }
+
+  const body = lines.length ? lines.join('\n') : (mode === 'incr' ? '（今天暂无新增/确认）' : '（暂无符合条件的记录）');
+  let out = (useHeader ? head + '\n' : '') + body;
+  if (useNote && noteTxt) out += '\n\n此外\n' + noteTxt;
+  document.getElementById('bcText').value = out;
+  ui.lastBcCount = recs.length;
+  document.getElementById('bcCount').textContent = `共 ${recs.length} 条`;
+}
+
+/* ========================= 表格图片 ========================= */
+let imgCanvases = [];   // [{ label, canvas }]
+function clearImages() {
+  imgCanvases = [];
+  const wrap = document.getElementById('bcImgWrap');
+  if (wrap) wrap.innerHTML = '';
+}
+function imageRows(recs, isOrder, withSection) {
+  const rows = [];
+  ['out', 'in'].forEach(d => {
+    const sub = sortRecs(recs.filter(r => r.dir === d));
+    if (!sub.length) return;
+    if (withSection) rows.push({ type: 'sec', text: '【' + dirLabel(d) + '】' });
+    sub.forEach(r => rows.push({
+      type: 'row',
+      cells: isOrder
+        ? [r.timeText, r.from || '国内', r.to, r.airline, r.note, r.fee]
+        : [r.timeText, r.from || '国内', r.to, r.airline, r.note],
+    }));
+  });
+  return rows;
+}
+function renderTableCanvas(rows, cols, title, titleOn) {
+  // 度量
+  const meas = document.createElement('canvas').getContext('2d');
+  const fHead = 'bold 16px "Microsoft YaHei","PingFang SC",sans-serif';
+  const fBody = '15px "Microsoft YaHei","PingFang SC",sans-serif';
+  const padX = 14, colGap = 26;
+  const widths = cols.map(c => { meas.font = fHead; return meas.measureText(c).width; });
+  rows.forEach(rw => {
+    if (rw.type !== 'row') return;
+    meas.font = fBody;
+    rw.cells.forEach((c, i) => { widths[i] = Math.max(widths[i], meas.measureText(String(c || '')).width); });
+  });
+  const colW = widths.map(w => w + colGap);
+  const tableW = colW.reduce((a, b) => a + b, 0);
+
+  const dpr = Math.max(2, window.devicePixelRatio || 1);
+  const marginX = 24, marginY = 22, titleH = 40, subH = 26, headH = 36, rowH = 30, secH = 30;
+  const W = tableW + marginX * 2;
+  let H = marginY + (titleOn ? titleH : 0) + subH + headH;
+  rows.forEach(rw => { H += (rw.type === 'row' ? rowH : secH); });
+  H += marginY + 14;
+
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+
+  let y = marginY;
+  if (titleOn) {
+    ctx.fillStyle = '#1f2733'; ctx.font = 'bold 20px "Microsoft YaHei","PingFang SC",sans-serif';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(title, marginX, y + 24);
+    y += titleH;
+  }
+  ctx.fillStyle = '#93a0b0'; ctx.font = '13px "Microsoft YaHei","PingFang SC",sans-serif';
+  ctx.fillText('更新时间：' + new Date().toLocaleString('zh-CN', { hour12: false }), marginX, y + 14);
+  y += subH;
+
+  // 表头
+  ctx.fillStyle = '#f2f5fa'; ctx.fillRect(marginX, y, tableW, headH);
+  ctx.font = fHead; ctx.fillStyle = '#5a6675';
+  let x = marginX + padX;
+  cols.forEach((c, i) => { ctx.fillText(c, x, y + 24); x += colW[i]; });
+  y += headH;
+
+  // 数据行
+  rows.forEach(rw => {
+    if (rw.type === 'sec') {
+      ctx.fillStyle = '#2563eb'; ctx.font = 'bold 15px "Microsoft YaHei","PingFang SC",sans-serif';
+      ctx.fillText(rw.text, marginX + padX, y + 20);
+      y += secH; return;
+    }
+    ctx.strokeStyle = '#eef1f6'; ctx.beginPath();
+    ctx.moveTo(marginX, y + rowH - 0.5); ctx.lineTo(marginX + tableW, y + rowH - 0.5); ctx.stroke();
+    ctx.font = fBody; ctx.fillStyle = '#1f2733';
+    let cx = marginX + padX;
+    rw.cells.forEach((c, i) => {
+      let s = String(c || '');
+      const maxW = colW[i] - colGap;
+      if (meas.measureText(s).width > maxW) {
+        // 简单截断（按字符估算）
+        while (s.length > 1 && meas.measureText(s + '…').width > maxW) s = s.slice(0, -1);
+        s += '…';
+      }
+      ctx.fillText(s, cx, y + 20); cx += colW[i];
+    });
+    y += rowH;
+  });
+
+  if (!rows.length) {
+    ctx.fillStyle = '#93a0b0'; ctx.font = fBody;
+    ctx.fillText('（暂无符合条件的记录）', marginX + padX, y + 20);
+  }
+  return cv;
+}
+function buildImage() {
+  const kind = audienceKind();
+  const mode = document.getElementById('bcMode').value;
+  const validOnly = document.getElementById('bcValidOnly').checked;
+  const titleOn = document.getElementById('bcHeader').checked;
+  const splitDir = document.getElementById('bcSplitDir').checked;
+  let recs = (kind === 'order' ? state.orders : state.passengers).slice();
+  if (validOnly) recs = recs.filter(r => isActive(r, kind));
+  recs = pickBroadcastSet(recs, kind, mode);
+
+  const isOrder = kind === 'order';
+  const cols = isOrder
+    ? ['时间', '出发地', '目的地', '航司要求', '备注', '费用']
+    : ['时间', '出发地', '目的地', '航司', '备注'];
+  const baseTitle = (isOrder ? '甲方端 · 宠物方需求' : '乘客端 · 乘机人行程') + ' · ' + modeLabel(mode);
+
+  imgCanvases = [];
+  const dirs = ['out', 'in'].filter(d => recs.some(r => r.dir === d));
+  if (splitDir && dirs.length) {
+    // 按方向分段：每个方向单独一张图；带抬头时方向写进标题，不带抬头时用分段行标识
+    dirs.forEach(d => {
+      const rows = imageRows(recs.filter(r => r.dir === d), isOrder, !titleOn);
+      imgCanvases.push({
+        label: dirLabel(d),
+        canvas: renderTableCanvas(rows, cols, baseTitle + ' · ' + dirLabel(d), titleOn),
+      });
+    });
+  } else {
+    const rows = imageRows(recs, isOrder, true);
+    imgCanvases.push({ label: '', canvas: renderTableCanvas(rows, cols, baseTitle, titleOn) });
+  }
+  renderImagePreviews();
+}
+function renderImagePreviews() {
+  const wrap = document.getElementById('bcImgWrap');
+  wrap.innerHTML = '';
+  imgCanvases.forEach((item, idx) => {
+    const box = document.createElement('div');
+    if (idx) box.style.marginTop = '14px';
+    if (imgCanvases.length > 1 || item.label) {
+      const cap = document.createElement('div');
+      cap.className = 'muted';
+      cap.style.margin = '0 0 6px';
+      cap.textContent = item.label + (imgCanvases.length > 1 ? '（' + (idx + 1) + '/' + imgCanvases.length + '）' : '');
+      box.appendChild(cap);
+    }
+    const img = document.createElement('img');
+    img.src = item.canvas.toDataURL('image/png');
+    img.alt = item.label || '群发表格图片';
+    box.appendChild(img);
+    if (imgCanvases.length > 1) {
+      const bar = document.createElement('div');
+      bar.className = 'toolbar';
+      bar.style.marginTop = '6px';
+      const dl = document.createElement('button');
+      dl.className = 'btn ghost sm';
+      dl.textContent = '下载这张';
+      dl.onclick = () => downloadOne(idx);
+      const cp = document.createElement('button');
+      cp.className = 'btn ghost sm';
+      cp.textContent = '复制这张';
+      cp.onclick = () => copyOne(idx);
+      bar.appendChild(dl); bar.appendChild(cp);
+      box.appendChild(bar);
+    }
+    wrap.appendChild(box);
+  });
+}
+function downloadCanvas(cv, name) {
+  const a = document.createElement('a');
+  a.download = name;
+  a.href = cv.toDataURL('image/png');
+  a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+function downloadOne(idx) {
+  const item = imgCanvases[idx];
+  if (!item) return;
+  downloadCanvas(item.canvas, '群发表格_' + todayStr() + (item.label ? '_' + item.label : '') + '.png');
+}
+function downloadImg() {
+  if (!imgCanvases.length) { toast('请先生成图片'); return; }
+  imgCanvases.forEach((item, idx) => {
+    const name = '群发表格_' + todayStr() + (item.label ? '_' + item.label : '') + '.png';
+    setTimeout(() => downloadCanvas(item.canvas, name), idx * 250);
+  });
+  toast(imgCanvases.length > 1 ? '已开始下载 ' + imgCanvases.length + ' 张图片' : '图片已下载');
+}
+async function copyCanvas(cv) {
+  try {
+    const blob = await new Promise(res => cv.toBlob(res, 'image/png'));
+    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+    return true;
+  } catch (e) { return false; }
+}
+async function copyOne(idx) {
+  const item = imgCanvases[idx];
+  if (!item) return;
+  const ok = await copyCanvas(item.canvas);
+  toast(ok ? (item.label ? '「' + item.label + '」图片已复制，可直接粘贴到微信' : '图片已复制，可直接粘贴到微信')
+           : '此浏览器不支持复制图片，请用「下载图片」');
+}
+async function copyImg() {
+  if (!imgCanvases.length) { toast('请先生成图片'); return; }
+  const ok = await copyCanvas(imgCanvases[0].canvas);
+  if (!ok) { toast('此浏览器不支持复制图片，请用「下载图片」'); return; }
+  toast(imgCanvases.length > 1
+    ? '已复制第一张（' + imgCanvases[0].label + '）；另一张请点它下方的「复制这张」'
+    : '图片已复制，可直接粘贴到微信');
+}
+
+/* ========================= 匹配推荐 ========================= */
+const GENERIC_CITY = ['国内', '不限', '回国', '任意', '待定', '无', '-'];
+function cityTokens(s) {
+  return String(s || '').split(/[\/、,，;；\s]+/).map(x => x.trim()).filter(x => x && x !== '无');
+}
+function cityScore(a, b) {
+  const ta = cityTokens(a), tb = cityTokens(b);
+  if (!ta.length || !tb.length) return 0.4;                       // 一方未填：中性
+  if (ta.some(t => tb.includes(t))) return 1;                     // 有相同城市
+  const ga = ta.some(t => GENERIC_CITY.includes(t));
+  const gb = tb.some(t => GENERIC_CITY.includes(t));
+  return (ga || gb) ? 0.55 : 0;                                   // 一方泛化：部分匹配
+}
+function monthOf(s) { const m = String(s || '').match(/(\d{1,2})月/); return m ? m[1] : ''; }
+function timeScore(a, b) {
+  if (a.dateFrom && b.dateFrom) {
+    const d1 = new Date(a.dateFrom + 'T00:00:00'), d2 = new Date(b.dateFrom + 'T00:00:00');
+    if (!isNaN(d1) && !isNaN(d2)) return Math.max(0, 1 - Math.abs(d1 - d2) / 86400000 / 30);
+  }
+  if (monthOf(a.timeText) && monthOf(a.timeText) === monthOf(b.timeText)) return 0.6; // 同月
+  return 0.5;
+}
+/* 为一条记录找另一类候选（订单↔乘客）：须同方向，按 城市/时间 相近度排序 */
+function matchCandidates(rec, kind) {
+  const wantPax = kind === 'order';
+  const pool = wantPax ? state.passengers : state.orders;
+  const otherKind = wantPax ? 'pax' : 'order';
+  const res = [];
+  pool.forEach(c => {
+    if (c.dir !== rec.dir || !isActive(c, otherKind)) return;
+    const sFrom = cityScore(rec.from, c.from), sTo = cityScore(rec.to, c.to), sTime = timeScore(rec, c);
+    const score = sFrom * 0.35 + sTo * 0.4 + sTime * 0.25;
+    res.push({ rec: c, score });
+  });
+  return res.filter(x => x.score >= 0.4).sort((a, b) => b.score - a.score).slice(0, 12);
+}
+function openMatch(rec, kind) {
+  const wantPax = kind === 'order';
+  const list = matchCandidates(rec, kind);
+  const ownTxt = `${rec.from || '国内'} → ${rec.to || '-'}　${rec.timeText || ''}`.trim();
+  const rowsHtml = list.length ? list.map((x, i) => {
+    const c = x.rec, pct = Math.round(x.score * 100);
+    const feeTd = wantPax ? '' : `<td>${esc(c.fee) || '-'}</td>`;
+    return `<tr>
+      <td>${esc(c.contact) || '-'}</td>
+      <td>${esc(c.from) || '-'} → ${esc(c.to) || '-'}</td>
+      <td>${esc(c.timeText) || '-'}</td>
+      <td>${esc(c.airline) || '-'}</td>
+      ${feeTd}
+      <td>${esc(c.note) || '-'}</td>
+      <td class="match-score">${pct}%</td>
+      <td><button class="btn sm" data-mi="${i}">成交</button></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="${wantPax ? 7 : 8}" class="muted" style="text-align:center;padding:18px">没找到相近候选，可放宽城市 / 时间，或确认方向是否正确</td></tr>`;
+
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <h3>${wantPax ? '为这条宠物订单找乘机人' : '从这条乘客反查可推订单'}</h3>
+    <p class="hint">依据：${wantPax ? '宠物订单' : '乘客行程'}「${esc(ownTxt)}」（${dirLabel(rec.dir)}）｜ 按 城市 + 时间 相近度排序，仅供经验判断参考，联系方式已保留。点「成交」可直接建单。</p>
+    <div class="wrap-table" style="max-height:52vh">
+      <table>
+        <thead><tr><th>联系方式</th><th>航线</th><th>时间</th><th>${wantPax ? '航司' : '航司要求'}</th>${wantPax ? '' : '<th>费用</th>'}<th>备注</th><th>匹配度</th><th>操作</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+    <div class="footer"><button class="btn gray" id="formCancel">关闭</button></div>`;
+  document.getElementById('modalBg').classList.add('active');
+  document.getElementById('formCancel').onclick = closeModal;
+  modal.querySelectorAll('[data-mi]').forEach(b => b.onclick = () => {
+    const c = list[+b.dataset.mi].rec;
+    const order = wantPax ? rec : c;
+    const pax = wantPax ? c : rec;
+    openDealForm(null, { order: order, pax: pax });
+  });
+}
+
+/* ========================= 日报（每日工作记录） ========================= */
+function recordSend(audience, mode, count) {
+  state.sendLog.push({ id: uid(), date: todayStr(), at: new Date().toISOString(), audience, mode, count });
+  save();
+}
+function dailySummary() {
+  const today = todayStr();
+  const all = [
+    ...state.orders.map(r => ({ ...r, _k: 'order' })),
+    ...state.passengers.map(r => ({ ...r, _k: 'pax' })),
+  ];
+  return {
+    today,
+    sends: state.sendLog.filter(s => s.date === today),
+    newOrders: state.orders.filter(isTodayNew),
+    newPax: state.passengers.filter(isTodayNew),
+    confirmed: all.filter(r => r.confirmedAt === today).length,
+    dealsToday: state.deals.filter(d => d.dealDate === today),
+    pendingMatch: state.orders.filter(r => r.status === '待匹配').length,
+    stale: all.filter(r => isActive(r, r._k) && freshLevel(r).level === 'stale').length,
+    depositUnpaid: state.deals.filter(d => d.deposit !== '已收').length,
+    balanceUnpaid: state.deals.filter(d => d.balance !== '已收').length,
+  };
+}
+function lineOf(r) {
+  return [r.timeText, (r.from || '国内') + '→' + (r.to || '-'), r.airline, r.contact].filter(Boolean).join('　');
+}
+function dailyReportText() {
+  const s = dailySummary();
+  const L = [];
+  L.push('【' + cnDate(s.today) + ' 工作记录】');
+  L.push('群发 ' + s.sends.length + ' 次（' + s.sends.map(x => (x.audience === 'carrier' ? '甲方' : '乘客') + (x.mode === 'incr' ? '增量' : '全量')).join('、') + '）');
+  L.push('新增/新确认：宠物订单 ' + s.newOrders.length + ' 条，乘机人 ' + s.newPax.length + ' 条');
+  s.newOrders.forEach(r => L.push('  · 订单 ' + lineOf(r)));
+  s.newPax.forEach(r => L.push('  · 乘客 ' + lineOf(r)));
+  L.push('成单 ' + s.dealsToday.length + ' 笔；今日确认时效 ' + s.confirmed + ' 条');
+  L.push('待跟进：待匹配订单 ' + s.pendingMatch + ' 条，超期未确认 ' + s.stale + ' 条，定金未结 ' + s.depositUnpaid + ' / 尾款未结 ' + s.balanceUnpaid);
+  return L.join('\n');
+}
+function renderDaily() {
+  const s = dailySummary();
+  document.getElementById('dailyDate').textContent = cnDate(s.today);
+  const list = (arr, fmt) => arr.length ? '<ul>' + arr.map(fmt).join('') + '</ul>' : '<div class="none">无</div>';
+  const recLi = r => `<li>${esc(r.timeText) || '-'}　${esc(r.from) || '国内'} → ${esc(r.to) || '-'}　${esc(r.airline) || ''}　${esc(r.contact) || ''}${r.fee ? '　' + esc(r.fee) : ''}</li>`;
+  document.getElementById('dailyBody').innerHTML = `
+    <div class="daily-sec">
+      <h4>今日概览</h4>
+      <div class="daily-stat">
+        <span><b>${s.sends.length}</b>次群发</span>
+        <span><b>${s.newOrders.length}</b>条新订单</span>
+        <span><b>${s.newPax.length}</b>条新乘客</span>
+        <span><b>${s.dealsToday.length}</b>笔成单</span>
+        <span><b>${s.confirmed}</b>条已确认时效</span>
+      </div>
+    </div>
+    <div class="daily-sec"><h4>今日新增 / 新确认 · 宠物订单（${s.newOrders.length}）</h4>${list(s.newOrders, recLi)}</div>
+    <div class="daily-sec"><h4>今日新增 / 新确认 · 乘机人（${s.newPax.length}）</h4>${list(s.newPax, recLi)}</div>
+    <div class="daily-sec"><h4>今日成单（${s.dealsToday.length}）</h4>${list(s.dealsToday, d =>
+      `<li>${esc(d.dealDate)}　${dirText(d)}　${esc(dealRoute(d))}${d.depDate ? '　' + esc(d.depDate) : ''}　收款 ${esc(d.price) || '-'} / 成本 ${esc(d.cost) || '-'}</li>`)}</div>
+    <div class="daily-sec">
+      <h4>待跟进</h4>
+      <div class="daily-stat">
+        <span><b>${s.pendingMatch}</b>条待匹配订单</span>
+        <span><b>${s.stale}</b>条超期未确认</span>
+        <span><b>${s.depositUnpaid}</b>笔定金未结</span>
+        <span><b>${s.balanceUnpaid}</b>笔尾款未结</span>
+      </div>
+    </div>
+    <div class="daily-sec"><h4>今日群发记录（${s.sends.length}）</h4>${list(s.sends, x =>
+      `<li>${new Date(x.at).toLocaleTimeString('zh-CN', { hour12: false }).slice(0, 5)}　${x.audience === 'carrier' ? '甲方端' : '乘客端'} · ${x.mode === 'incr' ? '增量' : '全量'}（${x.count} 条）</li>`)}</div>`;
+}
+
+/* ========================= 周报 / 月报 ========================= */
+function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function reportRange(key) {
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const monday = d => { const x = new Date(d); const wd = (x.getDay() + 6) % 7; x.setDate(x.getDate() - wd); return x; };
+  let from = '', to = '', label = '';
+  if (key === 'week' || key === 'lastweek') {
+    const s = monday(t); if (key === 'lastweek') s.setDate(s.getDate() - 7);
+    const e = new Date(s); e.setDate(s.getDate() + 6);
+    from = ymd(s); to = ymd(e); label = (key === 'week' ? '本周' : '上周') + ' ' + from + ' ~ ' + to;
+  } else if (key === 'month' || key === 'lastmonth') {
+    const y = t.getFullYear(), m = t.getMonth() + (key === 'lastmonth' ? -1 : 0);
+    const s = new Date(y, m, 1), e = new Date(y, m + 1, 0);
+    from = ymd(s); to = ymd(e); label = (key === 'month' ? '本月' : '上月') + ' ' + from + ' ~ ' + to;
+  } else { from = '0000-01-01'; to = '9999-12-31'; label = '全部时间'; }
+  return { key, from, to, label };
+}
+function inRangeStr(dstr, r) {
+  const s = localDateStr(dstr);
+  if (!s) return r.key === 'all';
+  return s >= r.from && s <= r.to;
+}
+function moneyNum(v) { const n = parseFloat(String(v == null ? '' : v).replace(/[^0-9.\-]/g, '')); return isNaN(n) ? 0 : n; }
+function reportData(key) {
+  const r = reportRange(key);
+  const orders = state.orders.filter(o => inRangeStr(o.createdAt, r));
+  const pax = state.passengers.filter(p => inRangeStr(p.createdAt, r));
+  const deals = state.deals.filter(d => inRangeStr(d.dealDate, r));
+  const price = deals.reduce((a, d) => a + moneyNum(d.price), 0);
+  const cost = deals.reduce((a, d) => a + moneyNum(d.cost), 0);
+  const base = Math.max(orders.length, pax.length);
+  const conv = base ? deals.length / base : 0;
+  const R = (from, to) => (from || '国内') + ' → ' + (to || '-');
+  const routes = {};
+  const touch = k => routes[k] || (routes[k] = { route: k, orders: 0, pax: 0, deals: 0, price: 0, cost: 0 });
+  orders.forEach(o => { touch(R(o.from, o.to)).orders++; });
+  pax.forEach(p => { touch(R(p.from, p.to)).pax++; });
+  deals.forEach(d => {
+    const o = dealOrder(d) || {};
+    const t = touch(R(d.from || o.from, d.to || o.to));
+    t.deals++; t.price += moneyNum(d.price); t.cost += moneyNum(d.cost);
+  });
+  const routeList = Object.values(routes).map(x => {
+    x.need = x.orders + x.pax; x.gross = x.price - x.cost;
+    x.conv = Math.max(x.orders, x.pax) ? x.deals / Math.max(x.orders, x.pax) : 0;
+    return x;
+  });
+  const air = {};
+  const A = v => { const s = String(v == null ? '' : v).trim(); return s || '未填 / 不限'; };
+  orders.forEach(o => { const k = A(o.airline); (air[k] = air[k] || { name: k, orders: 0, pax: 0 }).orders++; });
+  pax.forEach(p => { const k = A(p.airline); (air[k] = air[k] || { name: k, orders: 0, pax: 0 }).pax++; });
+  const airList = Object.values(air).map(x => { x.need = x.orders + x.pax; return x; });
+  return { range: r, orders, pax, deals, price, cost, gross: price - cost, conv, routeList, airList };
+}
+function reportText(d) {
+  const pct = x => (x * 100).toFixed(0) + '%';
+  const L = ['【' + d.range.label + ' 经营报表】'];
+  L.push('新增需求：宠物订单 ' + d.orders.length + ' 条，乘机人 ' + d.pax.length + ' 条');
+  L.push('成单 ' + d.deals.length + ' 笔，成交额 ' + d.price + '，成本 ' + d.cost + '，毛利 ' + d.gross + '，成立率 ' + pct(d.conv));
+  const hot = d.routeList.slice().sort((a, b) => (b.need - a.need) || (b.deals - a.deals)).slice(0, 5);
+  if (hot.length) L.push('热门航线：' + hot.map(x => x.route + '（' + x.need + '需求/' + x.deals + '单）').join('　'));
+  const best = d.routeList.slice().sort((a, b) => (b.deals - a.deals) || (b.gross - a.gross)).filter(x => x.deals > 0).slice(0, 5);
+  if (best.length) L.push('成单最多：' + best.map(x => x.route + '（' + x.deals + '单 / 毛利 ' + x.gross + '）').join('　'));
+  const hv = d.routeList.filter(x => x.need >= 2).sort((a, b) => (b.conv - a.conv) || (b.deals - a.deals)).filter(x => x.deals > 0).slice(0, 5);
+  if (hv.length) L.push('成立率最高：' + hv.map(x => x.route + '（' + pct(x.conv) + '，' + x.deals + '/' + x.need + '）').join('　'));
+  const air = d.airList.slice().sort((a, b) => b.need - a.need).slice(0, 5);
+  if (air.length) L.push('热门航司：' + air.map(x => x.name + '（' + x.need + '）').join('　'));
+  return L.join('\n');
+}
+function renderReport() {
+  const key = ui.reportRange || 'week';
+  document.querySelectorAll('#reportRange button').forEach(b => b.classList.toggle('active', b.dataset.r === key));
+  const d = reportData(key);
+  ui.reportCache = d;
+  document.getElementById('reportPeriod').textContent = d.range.label + '　｜　需求按录入时间统计，成单按成交日统计';
+  const pct = x => (x * 100).toFixed(0) + '%';
+  const num = x => x ? x.toLocaleString('zh-CN') : '0';
+  const hot = d.routeList.slice().sort((a, b) => (b.need - a.need) || (b.deals - a.deals)).slice(0, 10);
+  const byDeal = d.routeList.slice().sort((a, b) => (b.deals - a.deals) || (b.gross - a.gross) || (b.need - a.need)).filter(x => x.deals > 0).slice(0, 10);
+  const hv = d.routeList.filter(x => x.need >= 2 && x.deals > 0).sort((a, b) => (b.conv - a.conv) || (b.deals - a.deals)).slice(0, 10);
+  const air = d.airList.slice().sort((a, b) => b.need - a.need).slice(0, 10);
+  const emptyRow = n => `<tr><td colspan="${n}" class="muted" style="padding:18px;text-align:center">本期无数据</td></tr>`;
+  document.getElementById('reportBody').innerHTML = `
+    <div class="daily-sec">
+      <h4>本期概览</h4>
+      <div class="daily-stat">
+        <span><b>${d.orders.length}</b>条新宠物订单</span>
+        <span><b>${d.pax.length}</b>条新乘机人</span>
+        <span><b>${d.deals.length}</b>笔成单</span>
+        <span><b>${pct(d.conv)}</b>成立率</span>
+        <span><b>${num(d.price)}</b>成交额</span>
+        <span><b>${num(d.cost)}</b>成本</span>
+        <span><b>${num(d.gross)}</b>毛利</span>
+      </div>
+      <p class="hint">成立率 = 成单数 ÷ max(宠物订单数, 乘机人数)。毛利 = 收款 − 成本，仅统计本期成单。</p>
+    </div>
+    <div class="daily-sec">
+      <h4>热门航线 · 按需求单数（Top 10）</h4>
+      <div class="wrap-table"><table>
+        <thead><tr><th>航线</th><th>宠物订单</th><th>乘机人</th><th>成单</th><th>成立率</th></tr></thead>
+        <tbody>${hot.length ? hot.map(x => `<tr><td>${esc(x.route)}</td><td>${x.orders}</td><td>${x.pax}</td><td>${x.deals}</td><td>${pct(x.conv)}</td></tr>`).join('') : emptyRow(5)}</tbody>
+      </table></div>
+    </div>
+    <div class="daily-sec">
+      <h4>单子最多 / 收入最高航线（Top 10）</h4>
+      <div class="wrap-table"><table>
+        <thead><tr><th>航线</th><th>成单</th><th>成交额</th><th>成本</th><th>毛利</th></tr></thead>
+        <tbody>${byDeal.length ? byDeal.map(x => `<tr><td>${esc(x.route)}</td><td>${x.deals}</td><td>${num(x.price)}</td><td>${num(x.cost)}</td><td>${num(x.gross)}</td></tr>`).join('') : emptyRow(5)}</tbody>
+      </table></div>
+    </div>
+    <div class="daily-sec">
+      <h4>成立率最高航线 · 需求 ≥ 2（Top 10）</h4>
+      <div class="wrap-table"><table>
+        <thead><tr><th>航线</th><th>需求</th><th>成单</th><th>成立率</th></tr></thead>
+        <tbody>${hv.length ? hv.map(x => `<tr><td>${esc(x.route)}</td><td>${x.need}</td><td>${x.deals}</td><td>${pct(x.conv)}</td></tr>`).join('') : emptyRow(4)}</tbody>
+      </table></div>
+    </div>
+    <div class="daily-sec">
+      <h4>航司分布（Top 10）</h4>
+      <div class="wrap-table"><table>
+        <thead><tr><th>航司</th><th>宠物订单</th><th>乘机人</th></tr></thead>
+        <tbody>${air.length ? air.map(x => `<tr><td>${esc(x.name)}</td><td>${x.orders}</td><td>${x.pax}</td></tr>`).join('') : emptyRow(3)}</tbody>
+      </table></div>
+    </div>`;
+}
+
+/* ========================= 成单与款项 ========================= */
+/* 成单是「快照」：成交时把订单/乘机人的关键信息拷进来，之后台账里删掉也不影响成单 */
+function dealOrder(d) { return d.oSnap || state.orders.find(x => x.id === d.orderId) || null; }
+function dealPax(d) { return d.pSnap || state.passengers.find(x => x.id === d.paxId) || null; }
+function dealRoute(d) { return (d.from || (dealOrder(d) || {}).from || '国内') + ' → ' + (d.to || (dealOrder(d) || {}).to || '-'); }
+function dealStatus(d) { return d.balance === '已收' ? '已结单' : '进行中'; }
+function dirText(d) {
+  const o = d.oSnap || {}, p = d.pSnap || {};
+  const dir = d.dir || o.dir || p.dir || 'out';
+  return dir === 'in' ? '回国' : '出国';
+}
+function orderLabel(o) { return [o.contact || '（无联系方式）', (o.from || '国内') + '→' + (o.to || '-'), o.timeText || ''].filter(Boolean).join('　'); }
+function paxLabel(p) { return [p.contact || '（无联系方式）', (p.from || '-') + '→' + (p.to || '-'), p.timeText || ''].filter(Boolean).join('　'); }
+function snapshot(rec) { return rec ? JSON.parse(JSON.stringify(rec)) : null; }
+/* 手打的联系方式若在台账里唯一命中一条，也视为选中该记录 */
+function uniqByContact(arr, text) {
+  const m = arr.filter(x => (x.contact || '') === text);
+  return m.length === 1 ? m[0] : null;
+}
+
+/* 出发时间排序键：优先用准确的出发日期，没有则退回台账里的「10月底」这类模糊词 */
+function dealDepKey(d) {
+  const o = dealOrder(d) || {};
+  const m = String(d.depDate || o.dateFrom || '').match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return (+m[1]) * 10000 + (+m[2]) * 100 + (+m[3]);
+  const k = estDateKey({ timeText: d.timeText || o.timeText || '' });
+  if (k) {
+    const y = +(String(d.dealDate || todayStr()).slice(0, 4)) || new Date().getFullYear();
+    return y * 10000 + k.val;
+  }
+  return Number.MAX_SAFE_INTEGER;
+}
+
+/* ========================= 成单资料：上传文件 + 保存到本机文件夹 =========================
+   路径：桌面\宠物托运工作台\成单\<成交月份>月成单\<出发时间 行程 宠物方 乘机人>\
+   尾款已收（已结单）时，整个文件夹移到 结单\<成交月份>月结单\ 下。
+   浏览器不能直接写绝对路径，所以首次会让用户选一次「宠物托运工作台」文件夹，
+   句柄记在 IndexedDB 里，之后自动建月目录与单子目录。 */
+const FS_DB = 'pet_workbench_fs', FS_STORE = 'kv', FS_ROOT_KEY = 'dealRoot';
+let fsRoot = null, fsErr = '';
+
+function fsSupported() { return typeof window.showDirectoryPicker === 'function'; }
+function fsOpenDB() {
+  return new Promise((ok, fail) => {
+    const req = indexedDB.open(FS_DB, 1);
+    req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(FS_STORE)) req.result.createObjectStore(FS_STORE); };
+    req.onsuccess = () => ok(req.result);
+    req.onerror = () => fail(req.error);
+  });
+}
+function idbDo(mode, fn) {
+  return fsOpenDB().then(db => new Promise((ok, fail) => {
+    const req = fn(db.transaction(FS_STORE, mode).objectStore(FS_STORE));
+    req.onsuccess = () => ok(req.result);
+    req.onerror = () => fail(req.error);
+  }));
+}
+function idbGet(k) { return idbDo('readonly', s => s.get(k)); }
+function idbSet(k, v) { return idbDo('readwrite', s => s.put(v, k)); }
+function idbDel(k) { return idbDo('readwrite', s => s.delete(k)); }
+
+/* 只读取已授权的文件夹句柄，不弹任何窗；可在任意异步流程里安全调用 */
+async function fsSavedHandle() {
+  try {
+    if (fsRoot && (await fsRoot.queryPermission({ mode: 'readwrite' })) === 'granted') return fsRoot;
+    const saved = await idbGet(FS_ROOT_KEY);
+    if (saved && (await saved.queryPermission({ mode: 'readwrite' })) === 'granted') { fsRoot = saved; return saved; }
+  } catch (e) { /* 旧句柄已失效 */ }
+  return null;
+}
+/* 连接文件夹：必须由点击事件直接调用（进入函数后不要先 await），
+   否则浏览器会丢失 user gesture 并报 SecurityError，文件夹选择框不会弹出 */
+async function fsConnectRoot() {
+  if (!fsSupported()) {
+    fsErr = '浏览器不支持 showDirectoryPicker';
+    toast('当前浏览器不能选择文件夹：请用 Chrome / Edge 打开本页');
+    return null;
+  }
+  try {
+    const h = await window.showDirectoryPicker({ id: 'pet-workbench-deal', mode: 'readwrite', startIn: 'desktop' });
+    fsRoot = h; fsErr = '';
+    try { await idbSet(FS_ROOT_KEY, h); } catch (e) {}
+    return h;
+  } catch (e) {
+    if (e && e.name === 'AbortError') return null;
+    fsErr = (e && (e.name + '：' + e.message)) || String(e);
+    if (EMBEDDED) fsErr += '（当前在预览窗口里，请用 Chrome / Edge 打开本页）';
+    toast('连接文件夹失败：' + fsErr);
+    return null;
+  }
+}
+async function fsRootHandle() {
+  const h = await fsSavedHandle();
+  if (!h) throw new Error('FS_UNLINKED');
+  return h;
+}
+function safeName(s) {
+  return String(s == null ? '' : s).replace(/[\\/:*?"<>|\r\n\t]/g, '-').replace(/\s+/g, ' ').replace(/^[-\s]+|[-\s]+$/g, '').trim().slice(0, 80);
+}
+function dotDate(iso) {
+  const m = String(iso || '').match(/^\d{4}-(\d{2})-(\d{2})/);
+  return m ? (+m[1]) + '.' + (+m[2]) : '';
+}
+function dealFolderName(d) {
+  const o = dealOrder(d) || {}, p = dealPax(d) || {};
+  const time = dotDate(d.depDate) || safeName(o.timeText || p.timeText || '') || '待定';
+  const route = safeName((d.from || o.from || '国内') + '-' + (d.to || o.to || '待定'));
+  return [time, route, safeName(o.contact || '宠物方'), safeName(p.contact || '乘机人')].join(' ');
+}
+function dealFolderInfo(d) {
+  const settled = dealStatus(d) === '已结单';
+  const mk = String(d.dealDate || todayStr()).match(/^\d{4}-(\d{2})/);
+  const month = (mk ? +mk[1] : new Date().getMonth() + 1) + '月';
+  const rootName = settled ? '结单' : '成单';
+  return { rootName, monthDir: month + rootName, folder: dealFolderName(d) };
+}
+function dealFolderRel(d) {
+  const f = dealFolderInfo(d);
+  return f.rootName + '\\' + f.monthDir + '\\' + f.folder;
+}
+/* 宣传素材子文件夹：时间 出发地 目的地，例如 10.30 上海 温哥华 */
+function materialFolderName(d) {
+  const o = dealOrder(d) || {}, p = dealPax(d) || {};
+  const time = dotDate(d.depDate) || safeName(o.timeText || p.timeText || '') || '待定';
+  return safeName([time, d.from || o.from || '国内', d.to || o.to || '待定'].join(' '));
+}
+function dealMaterialRel(d) {
+  return '素材\\' + materialFolderName(d);
+}
+async function fsDirByPath(root, parts, create) {
+  let h = root;
+  for (const n of parts) h = await h.getDirectoryHandle(n, { create: !!create });
+  return h;
+}
+async function fsFileExists(dir, name) {
+  try { await dir.getFileHandle(name); return true; } catch (e) { return false; }
+}
+async function fsUniqueName(dir, name) {
+  name = safeName(name) || 'file';
+  if (!(await fsFileExists(dir, name))) return name;
+  const i = name.lastIndexOf('.');
+  const base = i > 0 ? name.slice(0, i) : name, ext = i > 0 ? name.slice(i) : '';
+  for (let n = 2; n < 200; n++) {
+    const t = base + '(' + n + ')' + ext;
+    if (!(await fsFileExists(dir, t))) return t;
+  }
+  return base + '-' + Date.now() + ext;
+}
+async function fsWriteFilesTo(d, files, parts) {
+  const root = await fsRootHandle();
+  const dir = await fsDirByPath(root, parts, true);
+  const saved = [];
+  for (const f of files) {
+    const name = await fsUniqueName(dir, f.name);
+    const fh = await dir.getFileHandle(name, { create: true });
+    const w = await fh.createWritable();
+    await w.write(f);
+    await w.close();
+    saved.push({ name, size: f.size });
+  }
+  return saved;
+}
+async function fsWriteFiles(d, files) {
+  const info = dealFolderInfo(d);
+  const saved = await fsWriteFilesTo(d, files, [info.rootName, info.monthDir, info.folder]);
+  return { info, saved };
+}
+async function fsCopyDir(src, dst) {
+  for await (const [name, h] of src.entries()) {
+    if (h.kind === 'file') {
+      const f = await h.getFile();
+      const fh = await dst.getFileHandle(name, { create: true });
+      const w = await fh.createWritable(); await w.write(f); await w.close();
+    } else {
+      await fsCopyDir(h, await dst.getDirectoryHandle(name, { create: true }));
+    }
+  }
+}
+async function fsMoveDir(root, fromParts, toParts) {
+  const fromParent = await fsDirByPath(root, fromParts.slice(0, -1), false);
+  const fromName = fromParts[fromParts.length - 1];
+  const src = await fromParent.getDirectoryHandle(fromName, { create: false });
+  const toParent = await fsDirByPath(root, toParts.slice(0, -1), true);
+  const dst = await toParent.getDirectoryHandle(toParts[toParts.length - 1], { create: true });
+  await fsCopyDir(src, dst);
+  await fromParent.removeEntry(fromName, { recursive: true });
+}
+/* 状态或月份变了：把已存在的文件夹挪到新位置 */
+async function syncDealFolder(d) {
+  if (!(d.files || []).length || !d.folderDir) return false;
+  const want = dealFolderRel(d);
+  if (d.folderDir === want) return false;
+  const root = await fsRootHandle();
+  await fsMoveDir(root, d.folderDir.split('\\'), want.split('\\'));
+  d.folderDir = want;
+  return true;
+}
+async function syncDealFolderQuiet(d) {
+  try { return await syncDealFolder(d); } catch (e) { console.warn('移动成单资料文件夹失败', e); return false; }
+}
+/* 结单时：只在本次会话已授权的情况下静默移动，不弹选择框 */
+async function tryMoveDealFolder(d) {
+  if (!(d.files || []).length) return;
+  try {
+    if (!fsRoot) {
+      const saved = await idbGet(FS_ROOT_KEY);
+      if (!saved || (await saved.queryPermission({ mode: 'readwrite' })) !== 'granted') return;
+      fsRoot = saved;
+    }
+    if (await syncDealFolder(d)) { afterChange(); toast('资料已移到「' + d.folderDir + '」'); }
+  } catch (e) { /* 下次打开资料弹窗时再移 */ }
+}
+function fmtSize(n) {
+  n = Number(n || 0);
+  if (n < 1024) return n + ' B';
+  if (n < 1048576) return Math.round(n / 1024) + ' KB';
+  return (n / 1048576).toFixed(1) + ' MB';
+}
+function addFileMeta(d, saved, rel) {
+  saved.forEach(s => d.files.push({ id: uid(), name: s.name, size: s.size, at: new Date().toISOString() }));
+  d.folderDir = rel;
+}
+async function stashFiles(d, list, msg) {
+  d.files = d.files || [];
+  for (const f of list) {
+    const key = 'blob:' + uid();
+    try { await idbSet(key, f); } catch (e) { toast('文件暂存失败，请重新上传'); break; }
+    d.files.push({ id: uid(), name: f.name, size: f.size, at: new Date().toISOString(), pending: true, blobKey: key });
+  }
+  afterChange();
+  toast(msg || '文件已暂存在浏览器，点「保存到文件夹」归档');
+}
+async function addDealFiles(d, list) {
+  if (!list || !list.length) return;
+  d.files = d.files || [];
+  if (!fsSupported()) {
+    await stashFiles(d, list, '当前浏览器不能直接写文件夹（请用 Chrome / Edge 打开），文件已暂存');
+    openDealFiles(d); return;
+  }
+  if (!(await fsSavedHandle())) {
+    await stashFiles(d, list, '还没连接文件夹，文件已暂存');
+    openDealFiles(d); return;
+  }
+  try {
+    await syncDealFolderQuiet(d);
+    const { info, saved } = await fsWriteFiles(d, list);
+    addFileMeta(d, saved, info.rootName + '\\' + info.monthDir + '\\' + info.folder);
+    afterChange();
+    toast('已保存 ' + saved.length + ' 个文件到 ' + info.monthDir + '\\' + info.folder);
+  } catch (e) {
+    if (e && e.name === 'AbortError') { toast('已取消，文件没有保存'); openDealFiles(d); return; }
+    console.warn('写入文件夹失败', e);
+    fsErr = (e && (e.name + '：' + e.message)) || String(e);
+    await stashFiles(d, list, '写入文件夹失败（' + ((e && e.name) || '未知错误') + '），文件已暂存');
+  }
+  openDealFiles(d);
+}
+async function savePendingFiles(d) {
+  const pending = (d.files || []).filter(f => f.pending);
+  if (!pending.length) { toast('没有待保存的文件'); return; }
+  if (!(await fsSavedHandle())) { toast('请先点「连接文件夹」选择「宠物托运工作台」文件夹'); return; }
+  const files = [];
+  for (const f of pending) {
+    try { const blob = await idbGet(f.blobKey); if (blob) files.push(new File([blob], f.name)); } catch (e) {}
+  }
+  if (!files.length) { toast('暂存文件已丢失，请重新上传'); return; }
+  try {
+    await syncDealFolderQuiet(d);
+    const { info, saved } = await fsWriteFiles(d, files);
+    d.files = d.files.filter(f => !f.pending);
+    addFileMeta(d, saved, info.rootName + '\\' + info.monthDir + '\\' + info.folder);
+    pending.forEach(f => { if (f.blobKey) idbDel(f.blobKey).catch(() => {}); });
+    afterChange();
+    toast('已保存 ' + saved.length + ' 个文件到文件夹');
+  } catch (e) {
+    if (e && e.name === 'AbortError') toast('已取消');
+    else { console.warn(e); toast('保存失败，请检查文件夹权限'); }
+  }
+  openDealFiles(d);
+}
+/* ============ 宣传素材回收：存到 素材\时间 出发地-目的地 ============ */
+async function stashMaterials(d, list, msg) {
+  d.materials = d.materials || [];
+  for (const f of list) {
+    const key = 'blob:' + uid();
+    try { await idbSet(key, f); } catch (e) { toast('素材暂存失败，请重新上传'); break; }
+    d.materials.push({ id: uid(), name: f.name, size: f.size, at: new Date().toISOString(), pending: true, blobKey: key });
+  }
+  afterChange();
+  toast(msg || '素材已暂存在浏览器，点「保存到文件夹」归档');
+}
+async function addDealMaterials(d, list) {
+  if (!list || !list.length) return;
+  d.materials = d.materials || [];
+  if (!fsSupported()) {
+    await stashMaterials(d, list, '当前浏览器不能直接写文件夹（请用 Chrome / Edge 打开），素材已暂存');
+    openDealMaterials(d); return;
+  }
+  if (!(await fsSavedHandle())) {
+    await stashMaterials(d, list, '还没连接文件夹，素材已暂存');
+    openDealMaterials(d); return;
+  }
+  try {
+    const rel = dealMaterialRel(d);
+    const saved = await fsWriteFilesTo(d, list, rel.split('\\'));
+    saved.forEach(s => d.materials.push({ id: uid(), name: s.name, size: s.size, at: new Date().toISOString() }));
+    afterChange();
+    toast('已保存 ' + saved.length + ' 个素材到 素材\\' + materialFolderName(d));
+  } catch (e) {
+    if (e && e.name === 'AbortError') { toast('已取消，素材没有保存'); openDealMaterials(d); return; }
+    console.warn('写入素材失败', e);
+    fsErr = (e && (e.name + '：' + e.message)) || String(e);
+    await stashMaterials(d, list, '写入文件夹失败（' + ((e && e.name) || '未知错误') + '），素材已暂存');
+  }
+  openDealMaterials(d);
+}
+async function savePendingMaterials(d) {
+  const pending = (d.materials || []).filter(f => f.pending);
+  if (!pending.length) { toast('没有待保存的素材'); return; }
+  if (!(await fsSavedHandle())) { toast('请先点「连接文件夹」选择「宠物托运工作台」文件夹'); return; }
+  const files = [];
+  for (const f of pending) {
+    try { const blob = await idbGet(f.blobKey); if (blob) files.push(new File([blob], f.name)); } catch (e) {}
+  }
+  if (!files.length) { toast('暂存素材已丢失，请重新上传'); return; }
+  try {
+    const rel = dealMaterialRel(d);
+    const saved = await fsWriteFilesTo(d, files, rel.split('\\'));
+    d.materials = (d.materials || []).filter(f => !f.pending);
+    saved.forEach(s => d.materials.push({ id: uid(), name: s.name, size: s.size, at: new Date().toISOString() }));
+    pending.forEach(f => { if (f.blobKey) idbDel(f.blobKey).catch(() => {}); });
+    afterChange();
+    toast('已保存 ' + saved.length + ' 个素材到文件夹');
+  } catch (e) {
+    if (e && e.name === 'AbortError') toast('已取消');
+    else { console.warn(e); toast('保存失败，请检查文件夹权限'); }
+  }
+  openDealMaterials(d);
+}
+
+async function downloadPendingFile(f) {
+  try {
+    const blob = await idbGet(f.blobKey);
+    if (!blob) { toast('文件已丢失，请重新上传'); return; }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = f.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  } catch (e) { toast('下载失败'); }
+}
+
+/* 浏览器不允许直接写文件夹时的兜底：打成 ZIP，解压到「宠物托运工作台」即得到同样的目录结构 */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(u8) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < u8.length; i++) c = CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+function zipStore(entries) {
+  const enc = new TextEncoder();
+  const u16 = n => [n & 255, (n >> 8) & 255];
+  const u32 = n => [n & 255, (n >> 8) & 255, (n >> 16) & 255, (n >>> 24) & 255];
+  const parts = [], central = [];
+  let offset = 0;
+  entries.forEach(e => {
+    const name = enc.encode(e.name);
+    const crc = crc32(e.data), size = e.data.length;
+    const local = new Uint8Array([0x50, 0x4b, 0x03, 0x04, ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21),
+      ...u32(crc), ...u32(size), ...u32(size), ...u16(name.length), ...u16(0)]);
+    parts.push(local, name, e.data);
+    central.push({ name, crc, size, offset });
+    offset += local.length + name.length + size;
+  });
+  const cdStart = offset;
+  let cdSize = 0;
+  central.forEach(c => {
+    const head = new Uint8Array([0x50, 0x4b, 0x01, 0x02, ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21),
+      ...u32(c.crc), ...u32(c.size), ...u32(c.size), ...u16(c.name.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0),
+      ...u32(0), ...u32(c.offset)]);
+    parts.push(head, c.name);
+    cdSize += head.length + c.name.length;
+  });
+  parts.push(new Uint8Array([0x50, 0x4b, 0x05, 0x06, ...u16(0), ...u16(0), ...u16(central.length), ...u16(central.length),
+    ...u32(cdSize), ...u32(cdStart), ...u16(0)]));
+  return new Blob(parts, { type: 'application/zip' });
+}
+async function exportPendingZip(list, dir, filename, emptyMsg) {
+  const pending = (list || []).filter(f => f.blobKey);
+  if (!pending.length) { toast(emptyMsg); return; }
+  dir = dir.replace(/\\/g, '/');
+  const entries = [];
+  for (const f of pending) {
+    try {
+      const blob = await idbGet(f.blobKey);
+      if (blob) entries.push({ name: dir + '/' + f.name, data: new Uint8Array(await blob.arrayBuffer()) });
+    } catch (e) { console.warn('打包文件失败', f.name, e); }
+  }
+  if (!entries.length) { toast('文件已丢失，请重新上传'); return; }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(zipStore(entries));
+  a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  toast('已导出压缩包，解压到「宠物托运工作台」即可');
+}
+async function exportDealZip(d) {
+  return exportPendingZip(d.files, d.folderDir || dealFolderRel(d), '资料包_' + dealFolderName(d) + '.zip', '没有待归档的文件');
+}
+async function exportMaterialsZip(d) {
+  return exportPendingZip(d.materials, dealMaterialRel(d), '素材包_' + dealFolderName(d) + '.zip', '没有待归档的素材');
+}
+
+/* 拖拽上传：拖的是文件才接收（避免把文字拖进输入框时被拦截） */
+function hasFileItems(e) {
+  return !!(e.dataTransfer && Array.from(e.dataTransfer.types || []).indexOf('Files') >= 0);
+}
+function bindFileDrop(zone, onFiles, hl) {
+  const mark = on => {
+    const el = (typeof hl === 'function' ? hl() : hl) || zone;
+    if (el) el.classList.toggle('dragging', on);
+  };
+  zone.addEventListener('dragenter', e => {
+    if (!hasFileItems(e)) return;
+    e.preventDefault(); mark(true);
+  });
+  zone.addEventListener('dragover', e => {
+    if (!hasFileItems(e)) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; mark(true);
+  });
+  zone.addEventListener('dragleave', e => {
+    if (!hasFileItems(e)) return;
+    if (!zone.contains(e.relatedTarget)) mark(false);
+  });
+  zone.addEventListener('drop', e => {
+    if (!hasFileItems(e)) return;
+    e.preventDefault(); e.stopPropagation(); mark(false);
+    const list = Array.from(e.dataTransfer.files || []);
+    if (list.length) onFiles(list);
+  });
+}
+/* 数据页：拖入 JSON / Excel（可一次拖多个，JSON 只处理第一个） */
+function handleImportFiles(files) {
+  const jsons = files.filter(f => /\.json$/i.test(f.name));
+  const sheets = files.filter(f => /\.(xlsx|xls|csv)$/i.test(f.name));
+  const bad = files.filter(f => !jsons.includes(f) && !sheets.includes(f));
+  if (bad.length) toast('已忽略不支持的文件：' + bad.map(f => f.name).join('、'));
+  if (jsons.length) {
+    if (jsons.length > 1) toast('JSON 备份一次只能导入一个，已用「' + jsons[0].name + '」');
+    importJson(jsons[0]);
+    return;
+  }
+  if (!sheets.length) { if (!bad.length) toast('只支持 .xlsx / .xls / .csv / .json 文件'); return; }
+  sheets.forEach(f => importXlsx(f));
+}
+
+function openDealFiles(d) { openDealCollection(d, 'files'); }
+function openDealMaterials(d) { openDealCollection(d, 'materials'); }
+
+function openDealCollection(d, kind) {
+  const isMat = kind === 'materials';
+  const info = dealFolderInfo(d);
+  const files = (isMat ? d.materials : d.files) || [];
+  const rel = isMat ? dealMaterialRel(d) : (info.rootName + '\\' + info.monthDir + '\\' + info.folder);
+  const addFn = isMat ? addDealMaterials : addDealFiles;
+  const saveFn = isMat ? savePendingMaterials : savePendingFiles;
+  const zipFn = isMat ? exportMaterialsZip : exportDealZip;
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <h3>${isMat ? '宣传素材' : '乘机人资料'} · ${esc((dealPax(d) || {}).contact || '未填')}</h3>
+    <p class="hint">保存位置：<b>桌面\\宠物托运工作台\\${esc(rel)}</b><br>
+      ${isMat
+        ? '素材单独放在「素材\\时间 出发地 目的地」，与「成单」「结单」文件夹并列，不随单子移动。文件只存在本机，不上传云端。'
+        : '第一次使用请点下面「连接文件夹」选一次「宠物托运工作台」，之后按成交月份自动建「' + esc(info.monthDir) + '」；结单后整单自动移到「结单\\' + esc(info.monthDir.replace('成单', '结单')) + '」。文件只存在本机，不上传云端。'}</p>
+    <div class="toolbar" style="margin-bottom:10px">
+      <button class="btn ghost" id="btnDealConnect">${fsRoot ? '已连接 · 更换文件夹' : '① 连接文件夹'}</button>
+      <span class="hint">${fsRoot ? '已连接「' + esc(fsRoot.name || '宠物托运工作台') + '」，上传后自动归档' : '先连接一次「宠物托运工作台」文件夹，之后上传即自动保存'}</span>
+      ${fsErr ? '<span class="hint" style="color:#d63b3b">上次失败：' + esc(fsErr) + '</span>' : ''}
+    </div>
+    <div class="dropzone" id="dealDrop" style="margin-bottom:10px">
+      <input type="file" id="dealFileInput" multiple style="position:absolute;left:-9999px">
+      <span><b>把文件拖到这里</b>（微信 / 资源管理器直接拖入，可一次多个）</span>
+      <button class="btn" id="btnDealUpload">＋ 选择文件</button>
+      ${files.some(f => f.pending) ? '<button class="btn ghost" id="btnDealSavePending">保存到文件夹</button><button class="btn ghost" id="btnDealZip">' + (isMat ? '导出素材包' : '导出资料包') + '</button>' : ''}
+    </div>
+    <p class="hint">${fsSupported() ? '图片 / 视频 / PDF / Word 等任意文件；同名自动加 (2)' : '当前浏览器不支持写入文件夹，请用 Chrome / Edge 打开'}</p>
+    <div class="wrap-table" style="max-height:300px">
+      <table>
+        <thead><tr><th>文件名</th><th>大小</th><th>位置</th><th>操作</th></tr></thead>
+        <tbody>${files.length ? files.map(f => `<tr>
+          <td>${esc(f.name)}</td>
+          <td>${fmtSize(f.size)}</td>
+          <td>${f.pending ? '<span class="tag mid">待保存</span>' : esc(isMat ? rel : (d.folderDir || rel))}</td>
+          <td>
+            ${f.pending ? `<button class="btn sm ghost" data-fdl="${f.id}">下载</button>` : ''}
+            <button class="btn sm danger" data-fdel="${f.id}">移除</button>
+          </td>
+        </tr>`).join('') : `<tr><td colspan="4" class="muted" style="text-align:center;padding:18px">${isMat ? '还没有上传宣传素材' : '还没有上传资料'}</td></tr>`}</tbody>
+      </table>
+    </div>
+    <div class="footer"><button class="btn gray" id="formCancel">关闭</button></div>`;
+  document.getElementById('modalBg').classList.add('active');
+  document.getElementById('formCancel').onclick = closeModal;
+  const input = document.getElementById('dealFileInput');
+  // 直接由点击触发选择框，不能被异步流程包住，否则浏览器会拒绝弹窗
+  document.getElementById('btnDealConnect').onclick = async () => {
+    const h = await fsConnectRoot();
+    if (!h) { openDealCollection(d, kind); return; }
+    toast('已连接文件夹：' + (h.name || '宠物托运工作台'));
+    if (files.some(f => f.pending)) { await saveFn(d); return; }
+    openDealCollection(d, kind);
+  };
+  document.getElementById('btnDealUpload').onclick = () => input.click();
+  input.onchange = e => {
+    const list = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (list.length) addFn(d, list);
+  };
+  /* 整个弹窗都可接收拖拽，高亮提示区；用属性赋值避免重复开窗后事件叠加 */
+  const hlDrop = on => {
+    const z = document.getElementById('dealDrop');
+    if (z) z.classList.toggle('dragging', on);
+  };
+  modal.ondragenter = e => { if (!hasFileItems(e)) return; e.preventDefault(); hlDrop(true); };
+  modal.ondragover = e => {
+    if (!hasFileItems(e)) return;
+    e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; hlDrop(true);
+  };
+  modal.ondragleave = e => {
+    if (!hasFileItems(e)) return;
+    if (!modal.contains(e.relatedTarget)) hlDrop(false);
+  };
+  modal.ondrop = e => {
+    if (!hasFileItems(e)) return;
+    e.preventDefault(); e.stopPropagation(); hlDrop(false);
+    const list = Array.from(e.dataTransfer.files || []);
+    if (list.length) addFn(d, list);
+  };
+  const sp = document.getElementById('btnDealSavePending');
+  if (sp) sp.onclick = () => saveFn(d);
+  const bz = document.getElementById('btnDealZip');
+  if (bz) bz.onclick = () => zipFn(d);
+  modal.querySelectorAll('[data-fdel]').forEach(b => {
+    b.onclick = () => {
+      const f = files.find(x => x.id === b.dataset.fdel);
+      if (!f) return;
+      if (!confirm((isMat ? '从成单里移除素材「' : '从成单里移除「') + f.name + '」？（已保存到文件夹的文件不会被删除）')) return;
+      if (f.blobKey) idbDel(f.blobKey).catch(() => {});
+      if (isMat) d.materials = files.filter(x => x.id !== f.id);
+      else d.files = files.filter(x => x.id !== f.id);
+      afterChange();
+      openDealCollection(d, kind);
+    };
+  });
+  modal.querySelectorAll('[data-fdl]').forEach(b => {
+    b.onclick = () => {
+      const f = files.find(x => x.id === b.dataset.fdl);
+      if (f) downloadPendingFile(f);
+    };
+  });
+}
+
+function renderDeals() {
+  const body = document.getElementById('dealsBody');
+  const f = ui.dealFilter || 'all';
+  const dd = ui.dealDir || 'all';
+  let deals = state.deals.slice().sort((a, b) =>
+    (dealDepKey(a) - dealDepKey(b)) || (a.dealDate || '').localeCompare(b.dealDate || ''));
+  if (f === 'doing') deals = deals.filter(d => dealStatus(d) === '进行中');
+  if (f === 'done') deals = deals.filter(d => dealStatus(d) === '已结单');
+  if (f === 'todayDeal') deals = deals.filter(d => (d.dealDate || '') === todayStr());
+  if (f === 'todayDone') deals = deals.filter(d => dealStatus(d) === '已结单' && d.settledAt === todayStr());
+  if (dd !== 'all') deals = deals.filter(d => dirText(d) === (dd === 'in' ? '回国' : '出国'));
+  const todayDealN = state.deals.filter(d => (d.dealDate || '') === todayStr()).length;
+  const todayDoneN = state.deals.filter(d => dealStatus(d) === '已结单' && d.settledAt === todayStr()).length;
+  const hint = document.getElementById('dealTodayHint');
+  if (hint) hint.textContent = '今日成交 ' + todayDealN + ' 笔 · 今日结单 ' + todayDoneN + ' 笔';
+  if (!deals.length) {
+    body.innerHTML = `<tr><td colspan="16" class="muted" style="padding:24px;text-align:center">暂无成单，点「＋ 新增成单」，或在台账的「匹配」里一键成交</td></tr>`;
+    return;
+  }
+  const moneyCell = (amt, st) => {
+    const a = esc(amt) ? esc(amt) : '<span class="muted">-</span>';
+    const tag = `<span class="tag ${st === '已收' ? 'done' : ''}">${esc(st)}</span>`;
+    return `${a} ${tag}`;
+  };
+  body.innerHTML = deals.map(d => {
+    const o = dealOrder(d), p = dealPax(d);
+    const diff = (Number(d.price || 0) - Number(d.cost || 0));
+    const st = dealStatus(d);
+    const oContact = o ? (esc(o.contact) || '<span class="muted">-</span>') : '<span class="muted">-</span>';
+    const pContact = p ? (esc(p.contact) || '<span class="muted">-</span>') : '<span class="muted">-</span>';
+    const dirT = dirText(d);
+    const nFiles = (d.files || []).length;
+    const nMats = (d.materials || []).length;
+    return `<tr>
+      <td>${esc(d.dealDate) || '-'}</td>
+      <td><span class="tag ${dirT === '回国' ? 'mid' : ''}">${dirT}</span></td>
+      <td>${esc(d.depDate || (o || {}).timeText) || '-'}</td>
+      <td>${esc(dealRoute(d))}</td>
+      <td>${oContact}</td>
+      <td>${pContact}</td>
+      <td>${esc(d.price) || '-'}</td>
+      <td>${esc(d.cost) || '-'}</td>
+      <td>${diff ? diff : '-'}</td>
+      <td>${moneyCell(d.depositAmt, d.deposit)}</td>
+      <td>${moneyCell(d.balanceAmt, d.balance)}</td>
+      <td><span class="tag ${st === '已结单' ? 'done' : 'mid'}">${st}</span></td>
+      <td>${st === '已结单' ? (esc(d.settledAt) || '-') : '-'}</td>
+      <td>${esc(d.note) || '-'}</td>
+      <td>
+        <button class="btn sm ghost" data-act="files" data-id="${d.id}">${nFiles ? '资料 ' + nFiles : '＋资料'}</button>
+        ${(st === '已结单' || nMats) ? `<button class="btn sm ghost" data-act="materials" data-id="${d.id}">${nMats ? '素材 ' + nMats : '＋素材'}</button>` : ''}
+      </td>
+      <td>
+        <button class="btn sm ghost" data-act="edit" data-id="${d.id}">改</button>
+        <button class="btn sm danger" data-act="del" data-id="${d.id}">删</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  body.querySelectorAll('button[data-id]').forEach(b => {
+    b.onclick = () => {
+      const d = state.deals.find(x => x.id === b.dataset.id);
+      if (!d) return;
+      if (b.dataset.act === 'files') openDealFiles(d);
+      else if (b.dataset.act === 'materials') openDealMaterials(d);
+      else if (b.dataset.act === 'edit') openDealForm(d);
+      else if (confirm('确定删除这笔成单？（台账里的原记录不会自动恢复，资料 / 素材文件夹不会被删除）')) {
+        state.deals = state.deals.filter(x => x.id !== d.id);
+        afterChange();
+      }
+    };
+  });
+}
+
+/* 新增/编辑成单：订单与乘机人可搜索选择，也可直接手动输入 */
+function openDealForm(d, prefill) {
+  prefill = prefill || {};
+  // 仍在台账里的来源：优先取「匹配」传进来的候选，其次按成单里记录的 id 回查
+  const liveO = (prefill.order && state.orders.indexOf(prefill.order) >= 0 ? prefill.order : null)
+    || (d ? state.orders.find(x => x.id === d.orderId) : null) || null;
+  const liveP = (prefill.pax && state.passengers.indexOf(prefill.pax) >= 0 ? prefill.pax : null)
+    || (d ? state.passengers.find(x => x.id === d.paxId) : null) || null;
+  const curO = liveO || (d && d.oSnap) || prefill.order || null;
+  const curP = liveP || (d && d.pSnap) || prefill.pax || null;
+  // 还在台账里 → 显示可搜索的完整标签；已移出（只剩快照）→ 只显示联系方式
+  const oVal = liveO ? orderLabel(liveO) : (curO ? (curO.contact || '') : '');
+  const pVal = liveP ? paxLabel(liveP) : (curP ? (curP.contact || '') : '');
+  const oOpts = state.orders.map(o => `<option value="${esc(orderLabel(o))}"></option>`).join('');
+  const pOpts = state.passengers.map(p => `<option value="${esc(paxLabel(p))}"></option>`).join('');
+  const v = d || { dealDate: todayStr(), deposit: '未收', balance: '未收' };
+  const from = v.from || (curO ? curO.from : '') || '';
+  const to = v.to || (curO ? curO.to : '') || '';
+  const dir = v.dir || (curO && curO.dir) || (curP && curP.dir) || 'out';
+  // 出发日期：成单后确定为准确日期，默认取台账里的日期（若有），否则今天，可改
+  const depDate = v.depDate || (curO && curO.dateFrom) || (curP && curP.dateFrom) || todayStr();
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <h3>${d ? '编辑' : '新增'}成单</h3>
+    <p class="hint">「宠物订单 / 乘机人」可从台账里选（输入会自动匹配），也可以直接手打联系方式。选中的记录会<b>从台账移出</b>，并在此保存一份快照。出发日期请填准确的日期。</p>
+    <div class="grid2">
+      <label>宠物订单</label><input data-n="oText" list="dlOrders" value="${esc(oVal)}" placeholder="输入关键词选择，或手打宠物方联系方式">
+      <label>乘机人</label><input data-n="pText" list="dlPax" value="${esc(pVal)}" placeholder="输入关键词选择，或手打乘机人联系方式">
+      <label>方向</label><select data-n="dir"><option value="out" ${dir === 'out' ? 'selected' : ''}>出国</option><option value="in" ${dir === 'in' ? 'selected' : ''}>回国</option></select>
+      <label>出发日期</label><input data-n="depDate" type="date" value="${esc(depDate)}">
+      <label>出发地</label><input data-n="from" type="text" value="${esc(from)}" placeholder="如：上海 / 国内">
+      <label>目的地</label><input data-n="to" type="text" value="${esc(to)}" placeholder="如：纽约">
+      <label>成交日期</label><input data-n="dealDate" type="date" value="${esc(v.dealDate)}">
+      <label>结单日期</label><input data-n="settledAt" type="date" value="${esc(v.settledAt || '')}">
+      <label>收款(宠物方)</label><input data-n="price" type="text" value="${esc(v.price || '')}" placeholder="宠物方付的总价">
+      <label>成本(付乘机人)</label><input data-n="cost" type="text" value="${esc(v.cost || '')}" placeholder="付给乘机人的">
+      <label>定金金额</label><input data-n="depositAmt" type="text" value="${esc(v.depositAmt || '')}" placeholder="如：1000">
+      <label>定金状态</label><select data-n="deposit">${DEP_STATUS.map(s => `<option ${s === v.deposit ? 'selected' : ''}>${s}</option>`).join('')}</select>
+      <label>尾款金额</label><input data-n="balanceAmt" type="text" value="${esc(v.balanceAmt || '')}" placeholder="如：2500">
+      <label>尾款状态</label><select data-n="balance">${DEP_STATUS.map(s => `<option ${s === v.balance ? 'selected' : ''}>${s}</option>`).join('')}</select>
+      <label>备注</label><input data-n="note" type="text" value="${esc(v.note || '')}">
+    </div>
+    <datalist id="dlOrders">${oOpts}</datalist>
+    <datalist id="dlPax">${pOpts}</datalist>
+    <div class="footer">
+      <button class="btn gray" id="formCancel">取消</button>
+      <button class="btn" id="formSave">保存</button>
+    </div>`;
+  document.getElementById('modalBg').classList.add('active');
+  document.getElementById('formCancel').onclick = closeModal;
+  // 尾款改成「已收」时自动填今天的结单日期，可手动改；改回未收则清空
+  const balSel = modal.querySelector('[data-n="balance"]');
+  const settledInput = modal.querySelector('[data-n="settledAt"]');
+  balSel.onchange = () => {
+    if (balSel.value === '已收' && !settledInput.value) settledInput.value = todayStr();
+    if (balSel.value !== '已收') settledInput.value = '';
+  };
+  document.getElementById('formSave').onclick = () => {
+    const data = {};
+    modal.querySelectorAll('[data-n]').forEach(el => { data[el.dataset.n] = el.value.trim(); });
+    const oText = data.oText, pText = data.pText;
+    // 编辑时若文本与快照里的联系方式一致，说明没换人——直接沿用快照，
+    // 避免「同名不同行程」被误关联（例如另一方向的同名记录）。
+    const oKeep = !!(d && d.oSnap && (d.oSnap.contact || '') === oText);
+    const pKeep = !!(d && d.pSnap && (d.pSnap.contact || '') === pText);
+    const oHit = (oText && !oKeep) ? (state.orders.find(o => orderLabel(o) === oText) || uniqByContact(state.orders, oText)) : null;
+    const pHit = (pText && !pKeep) ? (state.passengers.find(p => paxLabel(p) === pText) || uniqByContact(state.passengers, pText)) : null;
+
+    const rec = d || { id: uid() };
+    const prevStatus = d ? dealStatus(d) : '';
+    const prevSettled = d ? (d.settledAt || '') : '';
+    rec.dealDate = data.dealDate || todayStr();
+    rec.depDate = data.depDate || '';
+    rec.dir = data.dir === 'in' ? 'in' : 'out';
+    rec.price = data.price; rec.cost = data.cost;
+    rec.depositAmt = data.depositAmt; rec.balanceAmt = data.balanceAmt;
+    rec.deposit = data.deposit; rec.balance = data.balance; rec.note = data.note;
+    rec.from = data.from; rec.to = data.to;
+    if (oHit) { rec.oSnap = snapshot(oHit); rec.orderId = oHit.id; }
+    else if (oKeep) { /* 保持原快照 */ }
+    else { rec.oSnap = { contact: oText }; rec.orderId = ''; }
+    if (pHit) { rec.pSnap = snapshot(pHit); rec.paxId = pHit.id; }
+    else if (pKeep) { /* 保持原快照 */ }
+    else { rec.pSnap = { contact: pText }; rec.paxId = ''; }
+    // 结单日期：优先用表单里填的，没填则沿用原值，首次结单默认今天
+    if (dealStatus(rec) === '已结单') {
+      rec.settledAt = data.settledAt || (prevStatus === '已结单' ? prevSettled : '') || todayStr();
+    } else delete rec.settledAt;
+    if (!d) state.deals.push(rec);
+
+    // 成交后：从台账移出（成单已保存快照，之后与台账互不影响）
+    if (oHit) state.orders = state.orders.filter(x => x.id !== oHit.id);
+    if (pHit) state.passengers = state.passengers.filter(x => x.id !== pHit.id);
+    closeModal(); afterChange();
+    // 由「进行中」变「已结单」（或反向）：把资料文件夹在 成单 / 结单 之间移动
+    if (prevStatus && prevStatus !== dealStatus(rec)) tryMoveDealFolder(rec);
+    toast('已保存' + ((oHit || pHit) ? '，已从台账移出' : ''));
+  };
+}
+
+/* 旧数据一次性迁移：把成单关联的台账记录拷成快照，并从台账移出 */
+function migrateDeals() {
+  let moved = 0;
+  state.deals.forEach(d => {
+    if (!d.oSnap && d.orderId) {
+      const o = state.orders.find(x => x.id === d.orderId);
+      if (o) { d.oSnap = snapshot(o); state.orders = state.orders.filter(x => x.id !== o.id); moved++; }
+    }
+    if (!d.pSnap && d.paxId) {
+      const p = state.passengers.find(x => x.id === d.paxId);
+      if (p) { d.pSnap = snapshot(p); state.passengers = state.passengers.filter(x => x.id !== p.id); moved++; }
+    }
+    if (!d.from && d.oSnap) d.from = d.oSnap.from || '';
+    if (!d.to && d.oSnap) d.to = d.oSnap.to || '';
+    // 旧版「已转」已取消，统一并入「已收」
+    if (d.deposit === '已转') d.deposit = '已收';
+    if (d.balance === '已转') d.balance = '已收';
+    if (!d.deposit) d.deposit = '未收';
+    if (!d.balance) d.balance = '未收';
+    // 方向与出发日期：从快照补齐
+    if (!d.dir) d.dir = (d.oSnap && d.oSnap.dir) || (d.pSnap && d.pSnap.dir) || 'out';
+    if (!d.depDate) d.depDate = (d.oSnap && d.oSnap.dateFrom) || (d.pSnap && d.pSnap.dateFrom) || '';
+  });
+  return moved;
+}
+
+/* ========================= 导入导出 ========================= */
+function download(filename, content, type) {
+  const blob = new Blob([content], { type: type || 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+function exportJson() {
+  download('宠物托运备份_' + todayStr() + '.json', JSON.stringify(state, null, 2), 'application/json');
+  toast('已导出备份');
+}
+function importJson(file) {
+  const fr = new FileReader();
+  fr.onload = () => {
+    try {
+      const d = JSON.parse(fr.result);
+      if (!d.orders) throw 0;
+      if (!confirm('导入将覆盖当前全部数据，确定继续？')) return;
+      state.orders = d.orders || []; state.passengers = d.passengers || []; state.deals = d.deals || [];
+      state.sendLog = d.sendLog || [];
+      state.settings = Object.assign(state.settings, d.settings || {});
+      state.savedAt = d.savedAt || new Date().toISOString();
+      afterChange(); toast('导入成功');
+    } catch (e) { toast('文件格式不正确'); }
+  };
+  fr.readAsText(file);
+}
+function str(v) { return v == null ? '' : String(v).trim(); }
+
+/* PARSER-START */
+/* Excel 序列号（如 46305）转为中文日期 */
+function serialToDate(n) {
+  const d = new Date(Date.UTC(1899, 11, 30) + n * 86400000);
+  return { text: (d.getUTCMonth() + 1) + '月' + d.getUTCDate() + '日', iso: d.toISOString().slice(0, 10) };
+}
+function normTime(v) {
+  const s = str(v);
+  if (!s) return { text: '', iso: '' };
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    const n = Number(s);
+    if (n > 20000 && n < 80000) { const d = serialToDate(n); return { text: d.text, iso: d.iso }; }
+  }
+  return { text: s, iso: '' };
+}
+/* 默认列顺序（无表头粘贴时按位置套用） */
+const ORDER_COLS = ['时间', '出发地', '目的地', '航司要求', '备注', '费用', '联系方式'];
+const PAX_COLS = ['时间', '出发地', '目的地', '航司', '备注', '联系方式'];
+
+/* ===== 内容识别：用于纠正「按位置套用」可能造成的错列 ===== */
+const AIRLINE_KNOWN = ['大韩', '韩亚', '达美', '汉莎', '国泰', '长荣', '春秋', '吉祥', '全日空', '土航', '荷航', '加航', '芬航', '法航', '俄航', '泰航', '美联航', '联合航空', '美国航空', '加拿大航空', '芬兰航空', '新加坡航空', '俄罗斯航空', '法国航空', '荷兰皇家', '埃塞俄比亚', '阿联酋', '阿提哈德', '卡塔尔', '卡航', '新航', '港龙', '华航', '日航', '马航', '亚航', '越航', '菲航', '印尼鹰航', '埃及', '南非', '肯尼亚', '摩洛哥', '瑞士', '奥地利', '北欧', '英航', '土耳其', '韩亚航空', '大韩航空'];
+function looksAirline(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s) return false;
+  if (/[\/、,，]/.test(s)) return s.split(/[\/、,，]/).every(x => looksAirline(x)); // 大韩/韩亚
+  if (/航/.test(s)) return true;            // 国航 / 芬兰航空 / 土航
+  return AIRLINE_KNOWN.indexOf(s) >= 0;     // 大韩 / 韩亚 / 汉莎 / 春秋
+}
+function looksFee(v) { const s = String(v == null ? '' : v).trim().replace(/,/g, ''); return /^[¥￥]?\s*\d+(\.\d+)?\s*[元块]?$/.test(s); }
+function looksContact(v) {
+  const s = String(v == null ? '' : v).trim();
+  if (!s || looksFee(s) || looksAirline(s)) return false;
+  if (/^[A-Za-z][A-Za-z0-9_.\-@]*$/.test(s)) return true;   // ella / dd6033Ju / miR / mia
+  return /^[A-Za-z0-9_.\-@+]{4,}$/.test(s);
+}
+/* 把一行的尾部字段按「内容特征」重新归类；列位置只作为兜底提示，避免错位
+   内容优先级：费用=纯数字 > 航司=含「航」或已知简称 > 联系方式=字母数字串/纯短词，其余进备注
+   例：10月30日 上海 多伦多 加航 3500 服务犬 ella
+       → 费用=3500、航司=加航、备注=服务犬、联系方式=ella */
+const TAIL_KEYS = { '航司要求': 'airline', '航司': 'airline', '备注': 'note', '费用': 'fee', '人数': 'note', '可带数': 'note', '可带': 'note', '联系方式': 'contact' };
+/* 某栏没有内容时，可用「/」「-」「无」等占位：解析时视为该栏留空，直接跳过 */
+const TAIL_BLANK = ['/', '\\', '／', '＼', '-', '--', '—', '–', '无', '空', '暂无', '没有', 'none', 'n/a', 'na', '.'];
+function looksBlank(v) { return TAIL_BLANK.indexOf(String(v == null ? '' : v).trim().toLowerCase()) >= 0; }
+/* 备注栏常见的宠物描述词：命中则更可能是备注，不应被判为联系方式 */
+const PET_NOTE_EXACT = ['服务犬', '导盲犬', '搜救犬', '安抚犬', '医疗犬', '宠物', '托运', '随机', '有氧舱', '进客舱', '客舱', '检疫', '疫苗', '航空箱', '宠物箱', '犬', '狗', '猫', '鸟', '兔', '仓鼠', '龙猫', '貂'];
+const PET_NOTE_PAT = /(服务|导盲|搜救|安抚|医疗|助残)犬|托运|随机|有氧|进客舱|客舱|检疫|疫苗|航空箱|笼|^\d{1,2}\s*[只条个]$/;
+function looksPetNote(v) { const s = String(v == null ? '' : v).trim(); return PET_NOTE_EXACT.indexOf(s) >= 0 || PET_NOTE_PAT.test(s); }
+function classifyTail(vals, kind, hints) {
+  const okName = n => !hints || hints.indexOf(n) >= 0;
+  const out = { airline: '', note: '', fee: '', contact: '' };
+  // 占位符（/ - 无 等）代表该栏留空，先从内容池里剔除
+  const items = vals.map((v, i) => ({ i, v: str(v), h: (hints && hints[i]) || '' }))
+    .filter(x => x.v && !looksBlank(x.v));
+  const used = new Set();
+  const take = pred => { for (const it of items) if (!used.has(it.i) && pred(it.v)) { used.add(it.i); return it; } return null; };
+  if (okName('fee')) { const f = take(looksFee); if (f) out.fee = f.v; }
+  if (okName('airline')) { const a = take(looksAirline); if (a) out.airline = a.v; }
+  if (okName('contact')) {
+    let c = take(looksContact);
+    if (!c) {
+      // 兜底：联系方式永远在最右栏。取「最靠右」且不像费用/航司/宠物描述的那一个短词
+      // 这样即使没写备注（联系方式左移到了备注栏），也能正确识别
+      const rest = items.filter(it => !used.has(it.i) && !looksFee(it.v) && !looksAirline(it.v)
+        && !looksPetNote(it.v) && it.v.length <= 12 && !/\s/.test(it.v));
+      if (rest.length) { c = rest[rest.length - 1]; used.add(c.i); }
+    }
+    out.contact = c ? c.v : '';
+  }
+  if (okName('note')) out.note = items.filter(it => !used.has(it.i)).map(it => it.v).join(' ');
+  return out;
+}
+
+/* 解析一段二维表：可含「出国/回国」左右两块，也兼容分表、无表头版式 */
+function parseRows(rows, sheetKind, nameHint, forceDir) {
+  const res = { orders: [], passengers: [] };
+  const heads = [];
+  rows.forEach((row, r) => (row || []).forEach((v, c) => { if (str(v) === '时间') heads.push({ r, c }); }));
+  const blocks = [];
+
+  if (heads.length) {
+    const minC = Math.min(...heads.map(x => x.c));
+    heads.forEach(h => {
+      const hrow = rows[h.r] || [];
+      const cols = [];
+      for (let c = h.c; c < hrow.length; c++) { const v = str(hrow[c]); if (!v) break; cols.push({ index: c, name: v }); }
+      if (cols.length < 3) return;
+      const above = str((rows[h.r - 1] || [])[h.c]);
+      let dir;
+      if (forceDir) dir = forceDir;
+      else if (/回国/.test(above)) dir = 'in';
+      else if (/出发国外|出国/.test(above)) dir = 'out';
+      else if (/回国/.test(nameHint || '')) dir = 'in';
+      else if (/出国/.test(nameHint || '')) dir = 'out';
+      else dir = (h.c === minC) ? 'out' : 'in';   // 无标题时：靠左的块=出国，靠右的块=回国
+      blocks.push({ start: h.r + 1, cols: cols, dir: dir });
+    });
+    if (!blocks.length) return res;
+  } else {
+    // 没有表头：整段按默认列顺序解析为一个块（方向取手动选择，或默认出国）
+    const names = sheetKind === 'pax' ? PAX_COLS : ORDER_COLS;
+    blocks.push({ start: 0, cols: names.map((n, i) => ({ index: i, name: n })), dir: forceDir || 'out' });
+  }
+
+  blocks.forEach(b => {
+    const kind = sheetKind || (b.cols.some(x => x.name === '费用') ? 'order' : 'pax');
+    const maxIdx = b.cols.reduce((m, c2) => Math.max(m, c2.index), -1);
+    const colIdx = n => { const x = b.cols.find(c2 => c2.name === n); return x ? x.index : -1; };
+    for (let r = b.start; r < rows.length; r++) {
+      const row = rows[r] || [];
+      const get = n => { const i = colIdx(n); return i < 0 ? '' : row[i]; };
+      if (str(row[b.cols[0].index]) === '时间') continue;
+      const timeRaw = get('时间'), from = str(get('出发地')), to = str(get('目的地'));
+      if (/^[（(]/.test(str(timeRaw)) && !from && !to) continue;
+      if (!str(timeRaw) && !from && !to && !str(get('联系方式'))) continue;
+      // 尾部字段按「内容特征」重新归类：纠正 联系方式/费用/航司/备注 错列
+      const tailVals = [], tailKeys = [];
+      b.cols.forEach(c2 => { const k = TAIL_KEYS[c2.name]; if (k) { tailVals.push(row[c2.index]); tailKeys.push(k); } });
+      // 超出已知列的单元格也纳入识别，避免多出来的「联系方式」被整列丢弃
+      for (let c2 = maxIdx + 1; c2 < row.length; c2++) { tailVals.push(row[c2]); tailKeys.push(''); }
+      const tail = classifyTail(tailVals, kind, tailKeys);
+      const t = normTime(timeRaw);
+      const rec = {
+        id: uid(), dir: b.dir, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+        timeText: t.text, dateFrom: t.iso, dateTo: '',
+        from: from, to: to, airline: tail.airline, note: tail.note, contact: tail.contact,
+        status: str(get('状态')) || (kind === 'order' ? '待匹配' : '可用'),
+        confirmedAt: todayStr(),
+      };
+      if (kind === 'order') { rec.fee = tail.fee; res.orders.push(rec); }
+      else res.passengers.push(rec);
+    }
+  });
+  return res;
+}
+
+/* ===== 成单（成交记录）的导入解析 ===== */
+const DEAL_COLS = ['成交日', '方向', '出发日期', '出发地', '目的地', '宠物订单', '乘机人', '收款', '成本', '定金金额', '定金状态', '尾款金额', '尾款状态', '备注'];
+const DEAL_FIELDS = ['dealDate', 'dir', 'depDate', 'from', 'to', 'oContact', 'pContact', 'price', 'cost', 'depositAmt', 'deposit', 'balanceAmt', 'balance', 'note'];
+const DEAL_ALIAS = {
+  dealDate: ['成交日', '成交日期', '成交时间', '日期'],
+  dir: ['方向', '出国回国', '出国/回国'],
+  depDate: ['出发日期', '出发日', '出行日期', '出发时间'],
+  from: ['出发地', '出发城市', '出发', '起始地'],
+  to: ['目的地', '到达地', '到达', '目的'],
+  oContact: ['宠物订单', '订单', '宠物订单联系方式', '甲方联系方式', '宠物方联系方式', '宠物联系方式', '甲方'],
+  pContact: ['乘机人', '乘客', '乘机人联系方式', '乘客联系方式', '乘机'],
+  price: ['收款', '收款(宠物方)', '费用', '成交价', '总价'],
+  cost: ['成本', '成本(付乘机人)', '付给乘机人', '给乘机人'],
+  depositAmt: ['定金金额', '定金', '订金金额', '订金'],
+  deposit: ['定金状态', '订金状态'],
+  balanceAmt: ['尾款金额', '尾款'],
+  balance: ['尾款状态'],
+  note: ['备注', '备注说明', '说明'],
+};
+function normDealHead(v) { return str(v).replace(/\s+/g, '').replace(/（/g, '(').replace(/）/g, ')'); }
+function toIsoDate(v) {
+  const s = str(v);
+  if (!s) return '';
+  if (/^\d{4}[-/.]\d{1,2}[-/.]\d{1,2}$/.test(s)) {
+    const p = s.split(/[-/.]/); return p[0] + '-' + (Number(p[1]) < 10 ? '0' : '') + Number(p[1]) + '-' + (Number(p[2]) < 10 ? '0' : '') + Number(p[2]);
+  }
+  const t = normTime(s);
+  if (t.iso) return t.iso;
+  const m = s.match(/(\d{1,2})\s*[月\/.]\s*(\d{1,2})/);
+  if (m) { const y = new Date().getFullYear(); return y + '-' + (Number(m[1]) < 10 ? '0' : '') + Number(m[1]) + '-' + (Number(m[2]) < 10 ? '0' : '') + Number(m[2]); }
+  return '';
+}
+const DEAL_LOOKUP = (() => {
+  const m = {};
+  DEAL_FIELDS.forEach((f, i) => (DEAL_ALIAS[f] || [DEAL_COLS[i]]).forEach(a => { m[normDealHead(a)] = f; }));
+  return m;
+})();
+/* 解析成单记录：优先按表头名匹配列，无表头时按默认列顺序 */
+function parseDealsRows(rows) {
+  const out = [];
+  let headerRow = -1, colMap = {};
+  for (let r = 0; r < Math.min(rows.length, 8); r++) {
+    const row = rows[r] || [];
+    const map = {}; let hits = 0;
+    row.forEach((v, c) => { const k = DEAL_LOOKUP[normDealHead(v)]; if (k && map[k] === undefined) { map[k] = c; hits++; } });
+    if (hits >= 3) { headerRow = r; colMap = map; break; }
+  }
+  const start = headerRow >= 0 ? headerRow + 1 : 0;
+  for (let r = start; r < rows.length; r++) {
+    const row = rows[r] || [];
+    const get = f => {
+      if (headerRow >= 0) { const c = colMap[f]; return str(c === undefined ? '' : row[c]); }
+      const i = DEAL_FIELDS.indexOf(f); return str(row[i]);
+    };
+    const vals = DEAL_FIELDS.map(get);
+    if (!vals.join('').trim()) continue;
+    if (/^成交日|^成交日期$/.test(get('dealDate'))) continue;
+    const dealDate = toIsoDate(get('dealDate'));
+    const oC = get('oContact'), pC = get('pContact'), from = get('from'), to = get('to');
+    if (!dealDate && !oC && !pC && !from && !to) continue;
+    const dirRaw = normDealHead(get('dir'));
+    const dir = /回|in/i.test(dirRaw) ? 'in' : 'out';
+    out.push({
+      id: uid(), createdAt: new Date().toISOString(),
+      dealDate: dealDate || todayStr(), depDate: toIsoDate(get('depDate')), dir: dir,
+      from: from, to: to,
+      oSnap: { contact: oC }, orderId: '', pSnap: { contact: pC }, paxId: '',
+      price: get('price'), cost: get('cost'),
+      depositAmt: get('depositAmt'), deposit: /已收|已转/.test(get('deposit')) ? '已收' : '未收',
+      balanceAmt: get('balanceAmt'), balance: /已收|已转/.test(get('balance')) ? '已收' : '未收',
+      note: get('note'),
+    });
+  }
+  return out;
+}
+
+function parseWorkbook(wb) {
+  const res = { orders: [], passengers: [], deals: [] };
+  wb.SheetNames.forEach(sn => {
+    const ws = wb.Sheets[sn];
+    if (!ws) return;
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', blankrows: true, raw: true });
+    const name = sn.replace(/\s/g, '');
+    if (/成单|成交|款项/.test(name)) { res.deals = res.deals.concat(parseDealsRows(rows)); return; }
+    const kind = /甲方|宠物/.test(name) ? 'order' : (/乘客|乘机/.test(name) ? 'pax' : null);
+    const r = parseRows(rows, kind, name);
+    res.orders = res.orders.concat(r.orders);
+    res.passengers = res.passengers.concat(r.passengers);
+  });
+  return res;
+}
+
+/* 粘贴文本 -> 二维表（支持 Excel 的制表符分隔，也兼容多空格） */
+function textToRows(text) {
+  return text.replace(/\r/g, '').split('\n').filter(l => l.trim() !== '').map(line => {
+    if (line.indexOf('\t') >= 0) return line.split('\t');
+    return line.split(/\s{2,}|\s+/);
+  });
+}
+/* PARSER-END */
+
+/* 导出：保持你熟悉的「甲方端 / 乘客端」双表并排版式（含出国/回国两块） */
+function exportXlsx() {
+  if (typeof XLSX === 'undefined') { toast('Excel 组件未加载（可能无网络），请改用 JSON 备份'); return; }
+  const wb = XLSX.utils.book_new();
+  const B = '';
+  function blockSheet(leftHead, rightHead, left, right) {
+    const aoa = [['（中国出发国外）', B, B, B, B, B, B, B, '国外回国']];
+    aoa.push([...leftHead, B, ...rightHead]);
+    const n = Math.max(left.length, right.length);
+    for (let i = 0; i < n; i++) {
+      const a = left[i], b = right[i];
+      aoa.push([...(a ? a : leftHead.map(() => '')), B, ...(b ? b : rightHead.map(() => ''))]);
+    }
+    return XLSX.utils.aoa_to_sheet(aoa);
+  }
+  const oL = sortRecs(state.orders.filter(r => r.dir === 'out')).map(r => [r.timeText, r.from, r.to, r.airline, r.note, r.fee, r.contact]);
+  const oR = sortRecs(state.orders.filter(r => r.dir === 'in')).map(r => [r.timeText, r.from, r.to, r.airline, r.note, r.fee, r.contact]);
+  XLSX.utils.book_append_sheet(wb, blockSheet(
+    ['时间', '出发地', '目的地', '航司要求', '备注', '费用', '联系方式'],
+    ['时间', '出发地', '目的地', '航司要求', '备注', '费用', '联系方式'], oL, oR), '甲方端');
+
+  const pL = sortRecs(state.passengers.filter(r => r.dir === 'out')).map(r => [r.timeText, r.from, r.to, r.airline, r.note, r.contact]);
+  const pR = sortRecs(state.passengers.filter(r => r.dir === 'in')).map(r => [r.timeText, r.from, r.to, r.airline, r.note, r.contact]);
+  XLSX.utils.book_append_sheet(wb, blockSheet(
+    ['时间', '出发地', '目的地', '航司', '备注', '联系方式'],
+    ['时间', '出发地', '目的地', '航司', '备注', '联系方式'], pL, pR), '乘客端');
+
+  // 成单：按表头名导出，导入时可按表头自动识别回填
+  const dealAoa = [DEAL_COLS.slice()];
+  state.deals.slice().sort((a, b) => (b.dealDate || '').localeCompare(a.dealDate || '')).forEach(d => {
+    const o = d.oSnap || {}, p = d.pSnap || {};
+    dealAoa.push([d.dealDate || '', dirText(d), d.depDate || '', d.from || '', d.to || '', o.contact || '', p.contact || '', d.price || '', d.cost || '', d.depositAmt || '', d.deposit || '', d.balanceAmt || '', d.balance || '', d.note || '']);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dealAoa), '成单');
+
+  XLSX.writeFile(wb, '宠物托运台账_' + todayStr() + '.xlsx');
+  toast('已导出台账（含成单）');
+}
+
+function importXlsx(file) {
+  if (typeof XLSX === 'undefined') { toast('Excel 组件未加载，请改用 JSON 备份'); return; }
+  if (!confirm('导入会把 Excel 里的记录追加到现有台账（不会覆盖），确定？')) return;
+  const fr = new FileReader();
+  fr.onload = () => {
+    try {
+      const wb = XLSX.read(new Uint8Array(fr.result), { type: 'array' });
+      const res = parseWorkbook(wb);
+      const nd = (res.deals || []).length;
+      if (!res.orders.length && !res.passengers.length && !nd) {
+        toast('未识别到记录，请确认表里有「时间 / 出发地 / 目的地」或「成单」表头'); return;
+      }
+      state.orders = state.orders.concat(res.orders);
+      state.passengers = state.passengers.concat(res.passengers);
+      state.deals = state.deals.concat(res.deals || []);
+      afterChange();
+      toast(`导入完成：宠物订单 ${res.orders.length} 条，乘机人 ${res.passengers.length} 条，成单 ${nd} 笔`);
+    } catch (e) { toast('导入失败：' + e.message); }
+  };
+  fr.readAsArrayBuffer(file);
+}
+
+/* 粘贴导入：从 Excel 复制单元格后直接解析 */
+function doPasteImport() {
+  const text = document.getElementById('pasteArea').value;
+  if (!text.trim()) { toast('请先粘贴内容'); return; }
+  const kind = document.getElementById('pasteKind').value;
+  const auto = document.getElementById('pasteAuto').checked;
+  const forceDir = auto ? null : document.getElementById('pasteDir').value;
+  const rows = textToRows(text);
+  if (kind === 'deal') {
+    const deals = parseDealsRows(rows);
+    if (!deals.length) { toast('没解析到成单：请确认列顺序，或带上「成交日 / 方向」等表头'); return; }
+    if (!confirm(`将追加：成单 ${deals.length} 笔，确定？`)) return;
+    state.deals = state.deals.concat(deals);
+    afterChange();
+    toast(`已追加：成单 ${deals.length} 笔`);
+    return;
+  }
+  const res = parseRows(rows, kind, '', forceDir);
+  const n1 = res.orders.length, n2 = res.passengers.length;
+  if (!n1 && !n2) { toast('没解析到记录：请确认列顺序，或取消「自动识别方向」并选好方向'); return; }
+  if (!confirm(`将追加：宠物订单 ${n1} 条、乘机人 ${n2} 条，确定？`)) return;
+  state.orders = state.orders.concat(res.orders);
+  state.passengers = state.passengers.concat(res.passengers);
+  afterChange();
+  toast(`已追加：宠物订单 ${n1} 条，乘机人 ${n2} 条`);
+}
+
+/* 台账内快捷粘贴导入：并入当前子标签的 类型 + 方向 */
+function openPasteForm() {
+  const tab = currentTab();
+  const isOrder = tab.kind === 'order';
+  const colHint = isOrder
+    ? '时间 / 出发地 / 目的地 / 航司要求 / 备注 / 费用 / 联系方式'
+    : '时间 / 出发地 / 目的地 / 航司 / 备注 / 联系方式';
+  const modal = document.getElementById('modal');
+  modal.innerHTML = `
+    <h3>粘贴导入 · ${isOrder ? '宠物订单（甲方端）' : '乘机人行程（乘客端）'} · ${dirLabel(tab.dir)}</h3>
+    <p class="hint">直接在 Excel 里选中整行复制、粘贴到下面即可（一行一条，列用 Tab 分隔）。每条都会归入当前「${dirLabel(tab.dir)}」方向。列顺序：${colHint}；可带表头，也可不带。某栏没有内容时用「/」占位（如「加航 / / 凡尘」＝备注、费用为空）。</p>
+    <textarea id="pasteQuickBox" class="output" style="min-height:180px; font-family:inherit" placeholder="在此粘贴…"></textarea>
+    <div class="footer">
+      <button class="btn gray" id="formCancel">取消</button>
+      <button class="btn" id="formQuickOk">解析并追加</button>
+    </div>`;
+  document.getElementById('modalBg').classList.add('active');
+  document.getElementById('formCancel').onclick = closeModal;
+  document.getElementById('formQuickOk').onclick = () => {
+    const txt = document.getElementById('pasteQuickBox').value;
+    if (!txt.trim()) { toast('请先粘贴内容'); return; }
+    const res = parseRows(textToRows(txt), tab.kind, '', tab.dir);
+    const arr = tab.kind === 'order' ? res.orders : res.passengers;
+    if (!arr.length) { toast('没解析到记录，请确认列顺序'); return; }
+    (tab.kind === 'order' ? state.orders : state.passengers).push(...arr);
+    closeModal(); afterChange();
+    toast(`已追加 ${arr.length} 条到「${dirLabel(tab.dir)}」`);
+  };
+}
+
+/* ========================= 示例数据 ========================= */
+function loadSample() {
+  if (!confirm('载入示例数据会追加到现有数据中，确定？')) return;
+  const now = new Date().toISOString();
+  const mk = (kind, dir, o) => Object.assign({
+    id: uid(), dir, createdAt: now, updatedAt: now, confirmedAt: todayStr(),
+    status: kind === 'order' ? '待匹配' : '可用',
+  }, o);
+  const O = (dir, t, from, to, air, note, fee, ct) => mk('order', dir, { timeText: t, from, to, airline: air, note, fee, contact: ct });
+  const P = (dir, t, from, to, air, note, ct) => mk('pax', dir, { timeText: t, from, to, airline: air, note, contact: ct });
+
+  state.orders.push(
+    O('out', '10月20左右', '上海', '多伦多', '加航', '', '3500', '小wang'),
+    O('out', '10月下', '国内', '芝加哥', '', '', '', '凡尘'),
+    O('out', '10月15左右', '上海', '洛杉矶', '', '', '3500', 'gogo'),
+    O('out', '10月20左右', '上海', '巴黎/伦敦', '', '到巴黎后乘坐欧洲之星到伦敦', '5500', 'mia'),
+    O('out', '11月6日后', '国内', '达拉斯', '', '', '4000', '小wang'),
+    O('in', '11月初', '凤凰城', '北上', '', '', '', 'gogo'),
+    O('in', '10月中', '底特律', '回国', '', '托运', '', 'mia'),
+  );
+  state.passengers.push(
+    P('in', '10月20日', '洛杉矶', '上海', '', '', 'A'),
+    P('in', '10月8日后', '法国', '回国', '', '', 'B'),
+    P('out', '10月8日', '上海', '温哥华', '加航', '可带2只', 'C'),
+    P('out', '9月29日', '深圳', '墨西哥城', '南航直飞', '', 'D'),
+    P('out', '10月10日左右', '上海', '法兰克福', '', '', 'E'),
+  );
+  afterChange(); toast('示例数据已载入');
+}
+function clearAll() {
+  if (!confirm('将清空全部台账与成单数据。清空前的版本已自动存为快照，可用「恢复快照」找回。确定清空？')) return;
+  state.orders = []; state.passengers = []; state.deals = []; state.sendLog = [];
+  afterChange(); toast('已清空（可用「恢复快照」找回）');
+}
+
+/* ========================= 事件绑定 ========================= */
+function bindEvents() {
+  document.getElementById('btnAddRec').onclick = () => { const t = currentTab(); openForm(t.kind, t.dir, null); };
+  document.getElementById('btnPasteRec').onclick = openPasteForm;
+  document.getElementById('searchBox').oninput = e => { ui.search = e.target.value; renderLedger(); };
+  document.getElementById('statusFilter').onchange = e => { ui.status = e.target.value; renderLedger(); };
+
+  document.getElementById('btnGenText').onclick = buildText;
+  const toggleTopN = () => { document.getElementById('bcTopN').style.display = document.getElementById('bcMode').value === 'pick' ? '' : 'none'; };
+  toggleTopN();
+  document.getElementById('bcMode').onchange = () => { toggleTopN(); if (document.getElementById('bcText').value.trim()) buildText(); };
+  document.getElementById('bcTopN').onchange = () => { if (document.getElementById('bcText').value.trim()) buildText(); };
+  document.querySelectorAll('input[name=aud]').forEach(r => r.onchange = () => {
+    document.getElementById('bcSplitDir').checked = false;
+    document.getElementById('bcText').value = '';
+    clearImages();
+  });
+  document.querySelectorAll('#bcSplitDir,#bcValidOnly,#bcUseNote,#bcHeader').forEach(el => el.onchange = () => {
+    if (document.getElementById('bcText').value.trim()) buildText();
+  });
+  document.getElementById('bcNote').oninput = e => { state.settings.customNote = e.target.value; save(); };
+  document.getElementById('btnCopyText').onclick = async () => {
+    const txt = document.getElementById('bcText').value;
+    if (!txt.trim()) { toast('请先点「生成文案」'); return; }
+    const ok = await copyText(txt);
+    if (ok) {
+      recordSend(currentAudience(), document.getElementById('bcMode').value, ui.lastBcCount || 0);
+      toast('文案已复制并记入日报，可粘贴到微信群发助手');
+    } else toast('复制失败，请手动选择复制');
+  };
+  document.getElementById('btnCopyDaily').onclick = async () => {
+    const ok = await copyText(dailyReportText());
+    toast(ok ? '今日日报已复制' : '复制失败，请手动选择复制');
+  };
+  document.getElementById('btnGenImg').onclick = buildImage;
+  document.getElementById('btnDownloadImg').onclick = downloadImg;
+  document.getElementById('btnCopyImg').onclick = copyImg;
+
+  document.querySelectorAll('#reportRange button').forEach(b => b.onclick = () => {
+    ui.reportRange = b.dataset.r;
+    renderReport();
+  });
+  document.getElementById('btnCopyReport').onclick = async () => {
+    const d = reportData(ui.reportRange || 'week');
+    const ok = await copyText(reportText(d));
+    toast(ok ? '报表文案已复制' : '复制失败，请手动选择复制');
+  };
+
+  document.getElementById('btnAddDeal').onclick = () => openDealForm(null);
+  document.querySelectorAll('#dealFilter button').forEach(b => b.onclick = () => {
+    ui.dealFilter = b.dataset.f;
+    document.querySelectorAll('#dealFilter button').forEach(x => x.classList.toggle('active', x === b));
+    renderDeals();
+  });
+  document.querySelectorAll('#dealDir button').forEach(b => b.onclick = () => {
+    ui.dealDir = b.dataset.d;
+    document.querySelectorAll('#dealDir button').forEach(x => x.classList.toggle('active', x === b));
+    renderDeals();
+  });
+
+  document.getElementById('btnExportJson').onclick = exportJson;
+  document.getElementById('fileJson').onchange = e => { if (e.target.files[0]) importJson(e.target.files[0]); e.target.value = ''; };
+  document.getElementById('btnExportXlsx').onclick = exportXlsx;
+  document.getElementById('fileXlsx').onchange = e => { if (e.target.files[0]) importXlsx(e.target.files[0]); e.target.value = ''; };
+
+  /* 预览窗口（iframe）里原生文件选择器会被拦截并跳到空白页：
+     拦截「导入台账 / 导入备份」的标签点击，改为提示；独立打开（下载后双击）时不受影响。 */
+  ['fileXlsx', 'fileJson'].forEach(id => {
+    const lab = document.querySelector('label[for="' + id + '"]');
+    if (!lab) return;
+    lab.addEventListener('click', e => {
+      if (EMBEDDED) {
+        e.preventDefault();
+        toast('预览窗口不支持选择本地文件：请用「粘贴导入」，或把 Excel 直接拖到本页，或下载 html 后用 Chrome/Edge 打开');
+      }
+    });
+  });
+
+  /* 拖拽 Excel/JSON 文件到「数据」页（或提示区）即可导入，不需要文件选择器 */
+  const panelData = document.getElementById('panel-data');
+  const dataDrop = document.getElementById('dataDrop');
+  bindFileDrop(panelData, handleImportFiles, () => dataDrop);
+  bindFileDrop(dataDrop, handleImportFiles);
+
+  /* 拖到页面其他位置时不要跳转打开文件 */
+  ['dragover', 'drop'].forEach(t => document.addEventListener(t, e => {
+    if (hasFileItems(e)) e.preventDefault();
+  }));
+
+  document.getElementById('btnPasteImport').onclick = doPasteImport;
+  document.getElementById('pasteAuto').onchange = e => {
+    document.getElementById('pasteDir').disabled = e.target.checked;
+  };
+  document.getElementById('pasteDir').disabled = true;
+  // 「成单」没有方向开关：方向由每行的「方向」列决定，这里把方向控件收起并换提示
+  const pasteKindSel = document.getElementById('pasteKind');
+  const syncPasteHint = () => {
+    const isDeal = pasteKindSel.value === 'deal';
+    document.getElementById('pasteAutoWrap').style.display = isDeal ? 'none' : '';
+    document.getElementById('pasteDir').style.display = isDeal ? 'none' : '';
+    document.getElementById('pasteHint').textContent = isDeal
+      ? '成单列顺序：成交日 / 方向 / 出发日期 / 出发地 / 目的地 / 宠物订单 / 乘机人 / 收款 / 成本 / 定金金额 / 定金状态 / 尾款金额 / 尾款状态 / 备注（带表头时按表头名自动识别）。'
+      : '列顺序需为：时间 / 出发地 / 目的地 / 航司要求(或航司) / 备注 / 费用(仅甲方端) / 联系方式。某栏没有内容时用「/」占位，例如：11月底 上海 温哥华 加航 / / 凡尘（表示备注、费用为空，联系方式=凡尘）。';
+  };
+  pasteKindSel.onchange = syncPasteHint;
+  syncPasteHint();
+  document.getElementById('btnSample').onclick = loadSample;
+  document.getElementById('btnSnapshots').onclick = openSnapshots;
+  document.getElementById('btnClear').onclick = clearAll;
+
+  document.getElementById('btnGhConnect').onclick = ghConnect;
+  document.getElementById('btnGhPush').onclick = () => ghPush(false);
+  document.getElementById('btnGhPull').onclick = () => ghPull(true);
+  document.getElementById('btnGhOff').onclick = ghDisconnect;
+  ghInit();
+  document.getElementById('btnSyncLogin').onclick = showLogin;
+  document.getElementById('btnSyncPull').onclick = () => pullState(false);
+  document.getElementById('btnSyncPush').onclick = () => pushState(false);
+  document.getElementById('btnSyncLogout').onclick = logout;
+
+  document.getElementById('modalBg').onclick = e => { if (e.target.id === 'modalBg') closeModal(); };
+}
+
+/* ========================= 启动 ========================= */
+function init() {
+  load();
+  ui.panel = 'ledger';
+  document.getElementById('bcNote').value = state.settings.customNote;
+  bindEvents();
+  renderNav();
+  takeSnapshot();
+  renderStats();
+  renderPanels();
+  syncInit();
+  fsSavedHandle().catch(() => {}); // 启动时静默恢复已授权的资料文件夹
+}
+window.onerror = function (msg, src, line) {
+  let b = document.getElementById('errBanner');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = 'errBanner';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#d63b3b;color:#fff;padding:6px 12px;font-size:12px;z-index:9999';
+    document.body.appendChild(b);
+  }
+  b.textContent = '页面出错：' + msg + '（行 ' + line + '）';
+};
+try { init(); }
+catch (e) {
+  document.body.innerHTML = '<div style="padding:40px;font-family:sans-serif;font-size:15px">' +
+    '启动出错：' + esc(e.message) + '<br><br>请刷新页面重试；若仍不行，请把这段信息发给我。</div>';
+}
+</script>
+</body>
+</html>
