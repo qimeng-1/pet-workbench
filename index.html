@@ -2193,7 +2193,9 @@ function renderDeals() {
   const body = document.getElementById('dealsBody');
   const f = ui.dealFilter || 'all';
   const dd = ui.dealDir || 'all';
+  // 排序：进行中排前面、已结单统一排后面；同一组内按出发时间从早到晚
   let deals = state.deals.slice().sort((a, b) =>
+    ((dealStatus(a) === '已结单') - (dealStatus(b) === '已结单')) ||
     (dealDepKey(a) - dealDepKey(b)) || (a.dealDate || '').localeCompare(b.dealDate || ''));
   if (f === 'doing') deals = deals.filter(d => dealStatus(d) === '进行中');
   if (f === 'done') deals = deals.filter(d => dealStatus(d) === '已结单');
