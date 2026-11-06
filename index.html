@@ -49,6 +49,17 @@
     padding: 6px 14px; cursor: pointer; font-size: 13px; color: #5a6675;
   }
   .subtabs button.active { background: #2563eb; color: #fff; border-color: #2563eb; }
+  .deal-sec { margin-top: 8px; }
+  .deal-sec-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 14px 0 8px; }
+  .deal-sec-title { font-size: 14px; font-weight: 600; padding-left: 8px; border-left: 3px solid #2563eb; }
+  .deal-block { border: 1px solid #eef1f6; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+  .deal-block-title { padding: 7px 10px; background: #fafbfd; border-bottom: 1px solid #eef1f6; font-size: 13px; color: #5a6675; font-weight: 600; }
+  .deal-block th, .deal-block td { padding: 6px 8px; font-size: 12.5px; }
+  .deal-block td { white-space: nowrap; }
+  .deal-block td.dl-note { white-space: normal; min-width: 90px; max-width: 160px; word-break: break-word; }
+  .deal-block .wrap-table { border: none; border-radius: 0; max-height: none; }
+  .deal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 1200px) { .deal-grid { grid-template-columns: 1fr; } }
   .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
   input, select, textarea {
     font-family: inherit; font-size: 13px; padding: 7px 10px; border: 1px solid #d9e0ea;
@@ -194,30 +205,15 @@
   <!-- 成单与款项 -->
   <section class="panel" id="panel-deals">
     <div class="card">
-      <h3>成单与款项跟踪</h3>
-      <div class="subtabs" id="dealDir">
-        <button data-d="all" class="active">全部方向</button>
-        <button data-d="out">出国</button>
-        <button data-d="in">回国</button>
-      </div>
-      <div class="subtabs" id="dealFilter">
-        <button data-f="all" class="active">全部状态</button>
-        <button data-f="todayDeal">今日成交</button>
-        <button data-f="todayDone">今日结单</button>
-        <button data-f="doing">进行中</button>
-        <button data-f="done">已结单</button>
-      </div>
+      <h3>成单与结单 · 按月结算</h3>
       <div class="toolbar">
+        <label class="chk" for="dealMonth">月份</label>
+        <select id="dealMonth" style="min-width:132px"></select>
         <button class="btn" id="btnAddDeal">＋ 新增成单</button>
         <span class="hint" id="dealTodayHint"></span>
-        <span class="hint">定金 / 尾款可填金额并标记是否已收｜ 尾款「已收」即「已结单」，否则「进行中」</span>
       </div>
-      <div class="wrap-table">
-        <table>
-          <thead><tr><th>成交日</th><th>方向</th><th>出发日期</th><th>行程路线</th><th>宠物订单</th><th>乘机人</th><th>收款</th><th>成本</th><th>差价</th><th>定金</th><th>尾款</th><th>状态</th><th>结单日</th><th>备注</th><th>资料</th><th>操作</th></tr></thead>
-          <tbody id="dealsBody"></tbody>
-        </table>
-      </div>
+      <p class="hint" style="margin:0 0 4px">成单 = 当月成交且未结单（进行中）；结单 = 当月结单（尾款标记「已收」）。出国 / 回国分开显示。</p>
+      <div id="dealsBody"></div>
     </div>
   </section>
 
@@ -403,7 +399,7 @@ let state = {
   activeTab: 'order-out',
   savedAt: '',        // 数据最近一次改动时间（与服务器比对用，谁新用谁）
 };
-let ui = { search: '', status: '', dealFilter: 'all', dealDir: 'all', reportRange: 'week' };
+let ui = { search: '', status: '', dealMonth: '', reportRange: 'week' };
 
 function load() {
   try {
@@ -2189,66 +2185,108 @@ function openDealCollection(d, kind) {
   });
 }
 
+/* 月份键：'YYYY-MM'，成单按成交月份、结单按结单月份归档 */
+function dealMonthKey(v) { const m = String(v || '').match(/(\d{4})-(\d{2})/); return m ? m[1] + '-' + m[2] : ''; }
+function dealMonthLabel(ym) { const m = String(ym || '').match(/(\d{4})-(\d{2})/); return m ? m[1] + '年' + Number(m[2]) + '月' : '未填日期'; }
+function dealDoneMonth(d) { return dealStatus(d) === '已结单' ? dealMonthKey(d.settledAt || d.dealDate) : ''; }
+function fmtMoney(n) { return (n || 0).toLocaleString('zh-CN'); }
+function moneyCell(amt, st) {
+  const a = esc(amt) ? esc(amt) : '<span class="muted">-</span>';
+  return a + ' <span class="tag ' + (st === '已收' ? 'done' : '') + '">' + esc(st || '未收') + '</span>';
+}
+
 function renderDeals() {
   const body = document.getElementById('dealsBody');
-  const f = ui.dealFilter || 'all';
-  const dd = ui.dealDir || 'all';
-  // 排序：进行中排前面、已结单统一排后面；同一组内按出发时间从早到晚
-  let deals = state.deals.slice().sort((a, b) =>
-    ((dealStatus(a) === '已结单') - (dealStatus(b) === '已结单')) ||
-    (dealDepKey(a) - dealDepKey(b)) || (a.dealDate || '').localeCompare(b.dealDate || ''));
-  if (f === 'doing') deals = deals.filter(d => dealStatus(d) === '进行中');
-  if (f === 'done') deals = deals.filter(d => dealStatus(d) === '已结单');
-  if (f === 'todayDeal') deals = deals.filter(d => (d.dealDate || '') === todayStr());
-  if (f === 'todayDone') deals = deals.filter(d => dealStatus(d) === '已结单' && d.settledAt === todayStr());
-  if (dd !== 'all') deals = deals.filter(d => dirText(d) === (dd === 'in' ? '回国' : '出国'));
+  if (!body) return;
+  const curM = todayStr().slice(0, 7);
+
+  /* 月份下拉：只列出有数据的月份 + 当前月 */
+  const months = new Set();
+  state.deals.forEach(d => {
+    const a = dealMonthKey(d.dealDate); if (a) months.add(a);
+    const b = dealDoneMonth(d); if (b) months.add(b);
+  });
+  const hasData = m => state.deals.some(d => dealMonthKey(d.dealDate) === m || dealDoneMonth(d) === m);
+  if (!ui.dealMonth || !hasData(ui.dealMonth)) {
+    ui.dealMonth = hasData(curM) ? curM : (Array.from(months).sort().pop() || curM);
+  }
+  months.add(ui.dealMonth); months.add(curM);
+  const sel = document.getElementById('dealMonth');
+  if (sel) {
+    sel.innerHTML = Array.from(months).sort().reverse().map(m =>
+      '<option value="' + m + '"' + (m === ui.dealMonth ? ' selected' : '') + '>' + dealMonthLabel(m) + '</option>').join('');
+  }
+
   const todayDealN = state.deals.filter(d => (d.dealDate || '') === todayStr()).length;
   const todayDoneN = state.deals.filter(d => dealStatus(d) === '已结单' && d.settledAt === todayStr()).length;
   const hint = document.getElementById('dealTodayHint');
   if (hint) hint.textContent = '今日成交 ' + todayDealN + ' 笔 · 今日结单 ' + todayDoneN + ' 笔';
-  if (!deals.length) {
-    body.innerHTML = `<tr><td colspan="16" class="muted" style="padding:24px;text-align:center">暂无成单，点「＋ 新增成单」，或在台账的「匹配」里一键成交</td></tr>`;
-    return;
-  }
-  const moneyCell = (amt, st) => {
-    const a = esc(amt) ? esc(amt) : '<span class="muted">-</span>';
-    const tag = `<span class="tag ${st === '已收' ? 'done' : ''}">${esc(st)}</span>`;
-    return `${a} ${tag}`;
-  };
-  body.innerHTML = deals.map(d => {
+
+  const m = ui.dealMonth;
+  const doing = state.deals
+    .filter(d => dealStatus(d) === '进行中' && dealMonthKey(d.dealDate) === m)
+    .sort((a, b) => (dealDepKey(a) - dealDepKey(b)) || (a.dealDate || '').localeCompare(b.dealDate || ''));
+  const done = state.deals
+    .filter(d => dealStatus(d) === '已结单' && dealDoneMonth(d) === m)
+    .sort((a, b) => (a.settledAt || '').localeCompare(b.settledAt || '') || (dealDepKey(a) - dealDepKey(b)));
+
+  const headDoing = '<tr><th>出发日期</th><th>行程</th><th>宠物方</th><th>乘机人</th><th>报价</th><th>收款</th><th>备注</th><th>操作</th></tr>';
+  const headDone = headDoing;
+
+  const rowHtml = (d, settled) => {
     const o = dealOrder(d), p = dealPax(d);
-    const diff = (Number(d.price || 0) - Number(d.cost || 0));
-    const st = dealStatus(d);
+    const nFiles = (d.files || []).length, nMats = (d.materials || []).length;
     const oContact = o ? (esc(o.contact) || '<span class="muted">-</span>') : '<span class="muted">-</span>';
     const pContact = p ? (esc(p.contact) || '<span class="muted">-</span>') : '<span class="muted">-</span>';
-    const dirT = dirText(d);
-    const nFiles = (d.files || []).length;
-    const nMats = (d.materials || []).length;
     return `<tr>
-      <td>${esc(d.dealDate) || '-'}</td>
-      <td><span class="tag ${dirT === '回国' ? 'mid' : ''}">${dirT}</span></td>
-      <td>${esc(d.depDate || (o || {}).timeText) || '-'}</td>
+      <td>${esc(d.depDate || (o || {}).timeText) || '-'}
+        <div class="muted" style="font-size:11px">成单 ${esc((d.dealDate || '').slice(5)) || '-'}</div>
+        ${settled ? `<div class="muted" style="font-size:11px">结单 ${esc((d.settledAt || '').slice(5)) || '-'}</div>` : ''}</td>
       <td>${esc(dealRoute(d))}</td>
       <td>${oContact}</td>
       <td>${pContact}</td>
       <td>${esc(d.price) || '-'}</td>
-      <td>${esc(d.cost) || '-'}</td>
-      <td>${diff ? diff : '-'}</td>
-      <td>${moneyCell(d.depositAmt, d.deposit)}</td>
-      <td>${moneyCell(d.balanceAmt, d.balance)}</td>
-      <td><span class="tag ${st === '已结单' ? 'done' : 'mid'}">${st}</span></td>
-      <td>${st === '已结单' ? (esc(d.settledAt) || '-') : '-'}</td>
-      <td>${esc(d.note) || '-'}</td>
-      <td>
-        <button class="btn sm ghost" data-act="files" data-id="${d.id}">${nFiles ? '资料 ' + nFiles : '＋资料'}</button>
-        ${(st === '已结单' || nMats) ? `<button class="btn sm ghost" data-act="materials" data-id="${d.id}">${nMats ? '素材 ' + nMats : '＋素材'}</button>` : ''}
-      </td>
-      <td>
+      <td><div>定金 ${moneyCell(d.depositAmt, d.deposit)}</div><div>尾款 ${moneyCell(d.balanceAmt, d.balance)}</div></td>
+      <td class="dl-note">${esc(d.note) || '-'}</td>
+      <td><div style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="btn sm ghost" data-act="files" data-id="${d.id}">${nFiles ? '资料 ' + nFiles : '资料'}</button>
+        ${(settled || nMats) ? `<button class="btn sm ghost" data-act="materials" data-id="${d.id}">${nMats ? '素材 ' + nMats : '素材'}</button>` : ''}
         <button class="btn sm ghost" data-act="edit" data-id="${d.id}">改</button>
         <button class="btn sm danger" data-act="del" data-id="${d.id}">删</button>
-      </td>
+      </div></td>
     </tr>`;
-  }).join('');
+  };
+
+  const block = (title, rows, settled) => `<div class="deal-block">
+      <div class="deal-block-title">${title} · ${rows.length} 笔</div>
+      ${rows.length
+        ? `<div class="wrap-table"><table><thead>${settled ? headDone : headDoing}</thead>
+      <tbody>${rows.map(d => rowHtml(d, settled)).join('')}</tbody></table></div>`
+        : '<div class="muted" style="padding:12px">无</div>'}
+    </div>`;
+
+  const sum = (arr, fn) => arr.reduce((s, x) => s + fn(x), 0);
+  const depPaid = arr => sum(arr, d => d.deposit === '已收' ? moneyNum(d.depositAmt) : 0);
+  const balUnpaid = arr => sum(arr, d => d.balance !== '已收' ? moneyNum(d.balanceAmt) : 0);
+  const balPaid = arr => sum(arr, d => d.balance === '已收' ? moneyNum(d.balanceAmt) : 0);
+
+  body.innerHTML = `
+    <div class="deal-sec">
+      <div class="deal-sec-head"><span class="deal-sec-title">成单 · 进行中</span>
+        <span class="hint">本月成交 ${doing.length} 笔 · 已收定金 ¥${fmtMoney(depPaid(doing))} · 待收尾款 ¥${fmtMoney(balUnpaid(doing))}</span></div>
+      <div class="deal-grid">
+        ${block('出国', doing.filter(d => dirText(d) === '出国'), false)}
+        ${block('回国', doing.filter(d => dirText(d) === '回国'), false)}
+      </div>
+    </div>
+    <div class="deal-sec">
+      <div class="deal-sec-head"><span class="deal-sec-title">结单 · 已完成</span>
+        <span class="hint">本月结单 ${done.length} 笔 · 已收定金 ¥${fmtMoney(depPaid(done))} · 已收尾款 ¥${fmtMoney(balPaid(done))}</span></div>
+      <div class="deal-grid">
+        ${block('出国', done.filter(d => dirText(d) === '出国'), true)}
+        ${block('回国', done.filter(d => dirText(d) === '回国'), true)}
+      </div>
+    </div>`;
 
   body.querySelectorAll('button[data-id]').forEach(b => {
     b.onclick = () => {
@@ -2860,16 +2898,8 @@ function bindEvents() {
   };
 
   document.getElementById('btnAddDeal').onclick = () => openDealForm(null);
-  document.querySelectorAll('#dealFilter button').forEach(b => b.onclick = () => {
-    ui.dealFilter = b.dataset.f;
-    document.querySelectorAll('#dealFilter button').forEach(x => x.classList.toggle('active', x === b));
-    renderDeals();
-  });
-  document.querySelectorAll('#dealDir button').forEach(b => b.onclick = () => {
-    ui.dealDir = b.dataset.d;
-    document.querySelectorAll('#dealDir button').forEach(x => x.classList.toggle('active', x === b));
-    renderDeals();
-  });
+  const dealMonthSel = document.getElementById('dealMonth');
+  if (dealMonthSel) dealMonthSel.onchange = () => { ui.dealMonth = dealMonthSel.value; renderDeals(); };
 
   document.getElementById('btnExportJson').onclick = exportJson;
   document.getElementById('fileJson').onchange = e => { if (e.target.files[0]) importJson(e.target.files[0]); e.target.value = ''; };
