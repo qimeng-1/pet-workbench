@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="light">
-<meta name="description" content="宠物托运工作台：台账、群发、成单与款项、日报周报。数据保存在本机浏览器。">
+<html lang="zh-CN" data-page-node-id="dsjXjCPrkseCVwcoiKGTd1">
+<head data-page-node-id="Hhx1FGJK48bAGYGeQaOWa6">
+<meta charset="UTF-8" data-page-node-id="uzfjJt6duT8qIXKOGPraWp">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="TV7wmEImqNNz1ZKBvDTCTh">
+<meta name="color-scheme" content="light" data-page-node-id="y3T2oZNzmB6NSt74YSfM1d">
+<meta name="description" content="宠物托运工作台：台账、群发、成单与款项、日报周报。数据保存在本机浏览器。" data-page-node-id="PxCZyJY5CadlWb8T0FNnWa">
 <title>宠物托运工作台</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='47' fill='%23ff6fa8'/%3E%3Ccircle cx='50' cy='50' r='41' fill='none' stroke='white' stroke-width='3' opacity='.65'/%3E%3Cg fill='white'%3E%3Cellipse cx='50' cy='65' rx='19' ry='15'/%3E%3Ccircle cx='29' cy='44' r='8'/%3E%3Ccircle cx='43' cy='33' r='8'/%3E%3Ccircle cx='59' cy='33' r='8'/%3E%3Ccircle cx='73' cy='44' r='8'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='47' fill='%23ff6fa8'/%3E%3Ccircle cx='50' cy='50' r='41' fill='none' stroke='white' stroke-width='3' opacity='.65'/%3E%3Cg fill='white'%3E%3Cellipse cx='50' cy='65' rx='19' ry='15'/%3E%3Ccircle cx='29' cy='44' r='8'/%3E%3Ccircle cx='43' cy='33' r='8'/%3E%3Ccircle cx='59' cy='33' r='8'/%3E%3Ccircle cx='73' cy='44' r='8'/%3E%3C/g%3E%3C/svg%3E" data-page-node-id="SdF9ME7JbuyMSNLiSiRWGs">
 <!-- Excel 组件改为点击时按需加载（见 loadXlsx），断网时自动退化为 CSV，不再阻塞首屏 -->
 <style>
   /* ===== 设计变量（改色只改这里） ===== */
@@ -103,6 +103,9 @@
     color: #fff; background: linear-gradient(180deg, #4d7bf5, var(--brand));
     font-weight: 600; box-shadow: 0 10px 22px -12px rgba(59, 108, 240, .9);
   }
+  nav #btnUndo { margin-left: auto; }
+  nav #btnUndo:disabled { opacity: .4; cursor: default; }
+  nav #btnUndo:disabled:hover { background: none; color: var(--text-2); }
   /* ===== 主体 ===== */
   main { padding: 20px; max-width: 1440px; margin: 0 auto; }
   .panel { display: none; }
@@ -1180,382 +1183,388 @@
 })();
 </script>
 </head>
-<body>
+<body data-page-node-id="IHrNklM6VtOTHPFbxAgHV4">
 
-<header>
-  <div class="brand-mark" aria-hidden="true">
-    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="bmHair" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#b79bff"/><stop offset="1" stop-color="#8461d8"/>
+<header data-page-node-id="kAgC50Q7GXMROgShDLrc7A">
+  <div class="brand-mark" aria-hidden="true" data-page-node-id="S0Jdh8YQ7O3VRTbusSNVmi">
+    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" data-page-node-id="z4ICWvxtICeq237hWGKFSC">
+      <defs data-page-node-id="mCEcAA0mDQz2DqScbchj3Z">
+        <linearGradient id="bmHair" x1="0" y1="0" x2="0" y2="1" data-page-node-id="l2kU0RKB4gXQCDAVdgpuqV">
+          <stop offset="0" stop-color="#b79bff" data-page-node-id="R0gVHpENTLZUCsiRFNyP1z"/><stop offset="1" stop-color="#8461d8" data-page-node-id="YiMhcJsvDDQ9YVCasLnVCa"/>
         </linearGradient>
       </defs>
-      <path d="M10 22 L11 3 L27 14 Z" fill="#8b67dd" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
-      <path d="M13.6 18.5 L13.8 8.5 L22.5 14.6 Z" fill="#ff9ec4"/>
-      <path d="M54 22 L53 3 L37 14 Z" fill="#8b67dd" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
-      <path d="M50.4 18.5 L50.2 8.5 L41.5 14.6 Z" fill="#ff9ec4"/>
-      <path d="M8 34 Q8 7 32 7 Q56 7 56 34 L56 47 Q56 59 32 59 Q8 59 8 47 Z" fill="url(#bmHair)"/>
-      <ellipse cx="32" cy="36" rx="21" ry="19" fill="#fff1e2"/>
-      <path d="M11 31 Q10 9 32 9 Q54 9 53 31 Q46 21 39 22 Q34 29 27 24 Q19 29 11 31 Z" fill="url(#bmHair)"/>
-      <g>
-        <ellipse cx="23" cy="38" rx="5.6" ry="6.9" fill="#fff"/>
-        <ellipse cx="23" cy="38.6" rx="4.4" ry="5.8" fill="#6b45b8"/>
-        <ellipse cx="23" cy="40.4" rx="2.6" ry="3.2" fill="#42227f" opacity=".55"/>
-        <circle cx="21.3" cy="35.9" r="2.1" fill="#fff"/>
-        <circle cx="25" cy="41.3" r="1" fill="#fff" opacity=".85"/>
-        <path d="M17 31.8 Q23 28.8 29 31.8" stroke="#4a2f88" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <path d="M10 22 L11 3 L27 14 Z" fill="#8b67dd" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" data-page-node-id="HIHYEFj4xGLTrDTWP27o5s"/>
+      <path d="M13.6 18.5 L13.8 8.5 L22.5 14.6 Z" fill="#ff9ec4" data-page-node-id="UEiPzxkdCHJV8651OSXqB8"/>
+      <path d="M54 22 L53 3 L37 14 Z" fill="#8b67dd" stroke="#fff" stroke-width="1.6" stroke-linejoin="round" data-page-node-id="DJus66KbYeaq4N8njDAueD"/>
+      <path d="M50.4 18.5 L50.2 8.5 L41.5 14.6 Z" fill="#ff9ec4" data-page-node-id="hqPfYUB0YsPXcO2TIAW6oP"/>
+      <path d="M8 34 Q8 7 32 7 Q56 7 56 34 L56 47 Q56 59 32 59 Q8 59 8 47 Z" fill="url(#bmHair)" data-page-node-id="vmOd58i9c7fbFBA1C9kGsO"/>
+      <ellipse cx="32" cy="36" rx="21" ry="19" fill="#fff1e2" data-page-node-id="FfoSwHEKmvgQnZP7ERNfVA"/>
+      <path d="M11 31 Q10 9 32 9 Q54 9 53 31 Q46 21 39 22 Q34 29 27 24 Q19 29 11 31 Z" fill="url(#bmHair)" data-page-node-id="UjpVXAJ3Lnk0snRnCAo2Fo"/>
+      <g data-page-node-id="AfjC27JlBHM69otYUHnL3T">
+        <ellipse cx="23" cy="38" rx="5.6" ry="6.9" fill="#fff" data-page-node-id="z4Q6dMlT7YNTYo50sB2f7G"/>
+        <ellipse cx="23" cy="38.6" rx="4.4" ry="5.8" fill="#6b45b8" data-page-node-id="gqtrDbIgUWWfN1MdVgaiH0"/>
+        <ellipse cx="23" cy="40.4" rx="2.6" ry="3.2" fill="#42227f" opacity=".55" data-page-node-id="yNuNGlzvbaOCA2E2ymPeNm"/>
+        <circle cx="21.3" cy="35.9" r="2.1" fill="#fff" data-page-node-id="QYwllxbymNmFaDmx8GFGDk"/>
+        <circle cx="25" cy="41.3" r="1" fill="#fff" opacity=".85" data-page-node-id="yJJWDC8mJed2nZXR32iUGW"/>
+        <path d="M17 31.8 Q23 28.8 29 31.8" stroke="#4a2f88" stroke-width="1.8" fill="none" stroke-linecap="round" data-page-node-id="ANqCCu8OPylp5fiArM0YbA"/>
       </g>
-      <g>
-        <ellipse cx="41" cy="38" rx="5.6" ry="6.9" fill="#fff"/>
-        <ellipse cx="41" cy="38.6" rx="4.4" ry="5.8" fill="#6b45b8"/>
-        <ellipse cx="41" cy="40.4" rx="2.6" ry="3.2" fill="#42227f" opacity=".55"/>
-        <circle cx="39.3" cy="35.9" r="2.1" fill="#fff"/>
-        <circle cx="43" cy="41.3" r="1" fill="#fff" opacity=".85"/>
-        <path d="M35 31.8 Q41 28.8 47 31.8" stroke="#4a2f88" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <g data-page-node-id="TLgFY211dnw8wI5VixYbi5">
+        <ellipse cx="41" cy="38" rx="5.6" ry="6.9" fill="#fff" data-page-node-id="Gi27dVoo1InBe4j4qRCy59"/>
+        <ellipse cx="41" cy="38.6" rx="4.4" ry="5.8" fill="#6b45b8" data-page-node-id="fVM6uYtgvqBlzlH3fqMiu6"/>
+        <ellipse cx="41" cy="40.4" rx="2.6" ry="3.2" fill="#42227f" opacity=".55" data-page-node-id="cRaghgsua11rQB0UtAosOa"/>
+        <circle cx="39.3" cy="35.9" r="2.1" fill="#fff" data-page-node-id="nwuOMLSgSUsiRawF8SLe4q"/>
+        <circle cx="43" cy="41.3" r="1" fill="#fff" opacity=".85" data-page-node-id="JMTBALl3DVNphXZmm0TquW"/>
+        <path d="M35 31.8 Q41 28.8 47 31.8" stroke="#4a2f88" stroke-width="1.8" fill="none" stroke-linecap="round" data-page-node-id="AUJFuMoo31qHGq2MDAPFUM"/>
       </g>
-      <ellipse cx="15.5" cy="45.5" rx="4.6" ry="2.4" fill="#ff9ab6" opacity=".75"/>
-      <ellipse cx="48.5" cy="45.5" rx="4.6" ry="2.4" fill="#ff9ab6" opacity=".75"/>
-      <path d="M28 46 Q30 49 32 46 Q34 49 36 46" stroke="#d77a98" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-      <g transform="translate(49,19) rotate(16)">
-        <path d="M0 0 L-8 -6 L-8 6 Z" fill="#ff6fa8"/>
-        <path d="M0 0 L8 -6 L8 6 Z" fill="#ff6fa8"/>
-        <circle cx="0" cy="0" r="2.7" fill="#ffd36e"/>
+      <ellipse cx="15.5" cy="45.5" rx="4.6" ry="2.4" fill="#ff9ab6" opacity=".75" data-page-node-id="ta0EZJwpX5aMjDSnnQPKp4"/>
+      <ellipse cx="48.5" cy="45.5" rx="4.6" ry="2.4" fill="#ff9ab6" opacity=".75" data-page-node-id="LGgszJDRsVDYFjyCr5gNcE"/>
+      <path d="M28 46 Q30 49 32 46 Q34 49 36 46" stroke="#d77a98" stroke-width="1.6" fill="none" stroke-linecap="round" data-page-node-id="SWb46Y3YxmX1mQjmnEDxU8"/>
+      <g transform="translate(49,19) rotate(16)" data-page-node-id="Z6u4KQoJwNtkTVvHdF5SUd">
+        <path d="M0 0 L-8 -6 L-8 6 Z" fill="#ff6fa8" data-page-node-id="S9O2N9CKplokUIHGBjANSg"/>
+        <path d="M0 0 L8 -6 L8 6 Z" fill="#ff6fa8" data-page-node-id="TbBlsjoWhwhwAAao6FLVNl"/>
+        <circle cx="0" cy="0" r="2.7" fill="#ffd36e" data-page-node-id="jAwgBMLJmrRbSgGfXfif8S"/>
       </g>
-      <path d="M7 9 l1.3 3 3 1.3 -3 1.3 -1.3 3 -1.3 -3 -3 -1.3 3 -1.3 z" fill="#ffd36e"/>
+      <path d="M7 9 l1.3 3 3 1.3 -3 1.3 -1.3 3 -1.3 -3 -3 -1.3 3 -1.3 z" fill="#ffd36e" data-page-node-id="Boa2WqsqpusV8afsK16Da7"/>
     </svg>
   </div>
-  <div class="brand-text">
-    <h1>宠物托运工作台 <span class="ver" id="appVer">v—</span></h1>
-    <div class="sub desc">台账 · 群发 · 收款 · 日报 · 报表　｜　数据存本机，每天记得备份</div>
+  <div class="brand-text" data-page-node-id="uKReEUkJr1N5OSBvnDCo4v">
+    <h1 data-page-node-id="yhYuBjnfCxPgM1VHT0qe5v">宠物托运工作台 <span class="ver" id="appVer" data-page-node-id="5vUtgaYdN23gplHuVG04Hs">v—</span></h1>
+    <div class="sub desc" data-page-node-id="XNXFw54v6gagviJ2TiVHXz">台账 · 群发 · 收款 · 日报 · 报表　｜　数据存本机，每天记得备份</div>
   </div>
-  <button class="theme-toggle" id="themeToggle" type="button" aria-expanded="false" aria-haspopup="true">🎨 换装</button>
-  <div class="theme-panel" id="themePanel">
-    <h4>选择主题 <span>切换后自动记住</span></h4>
-    <button class="theme-opt" data-theme="manga" type="button">
-      <span class="theme-swatches"><i style="background:#17171f"></i><i style="background:#e8402a"></i><i style="background:#ffcf3a"></i></span>
-      <span class="theme-txt"><b>漫画分格</b><small>粗黑描边 · 网点 · 硬阴影 · 拟声词</small></span>
-      <span class="theme-check">✓</span>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-expanded="false" aria-haspopup="true" data-page-node-id="iILGUZs7I49IHSB03OxA9A">🎨 换装</button>
+  <div class="theme-panel" id="themePanel" data-page-node-id="bBvtxhf3FIPNq9thDqDn5I">
+    <h4 data-page-node-id="YNs5OWBH7bFCql1yPfhmJK">选择主题 <span data-page-node-id="vowhvzZm9zDlSs60CEftpd">切换后自动记住</span></h4>
+    <button class="theme-opt" data-theme="manga" type="button" data-page-node-id="lIFEPAVCWfRK1mFb1EEISY">
+      <span class="theme-swatches" data-page-node-id="yhuTHztK7Zmz884LHzEqSf"><i style="background:#17171f" data-page-node-id="5dCx1BZDZtZHaWYcZJsQOA"></i><i style="background:#e8402a" data-page-node-id="NYfZMFkgCBOFDe7AaJiCL6"></i><i style="background:#ffcf3a" data-page-node-id="1vfuCdF5ecPtFfwHYZFh2F"></i></span>
+      <span class="theme-txt" data-page-node-id="MlRyxKVGho9RBPyUlW2qAW"><b data-page-node-id="gnqgVLVIz7jDF23PWIDP3n">漫画分格</b><small data-page-node-id="nRAQGsVI3ltksCmD4RzCIt">粗黑描边 · 网点 · 硬阴影 · 拟声词</small></span>
+      <span class="theme-check" data-page-node-id="9fAjBhWOitnMK63jfQzzd8">✓</span>
     </button>
-    <button class="theme-opt" data-theme="starlight" type="button">
-      <span class="theme-swatches"><i style="background:#7b4bd8"></i><i style="background:#e569b6"></i><i style="background:#ffc94d"></i></span>
-      <span class="theme-txt"><b>星屑魔法少女</b><small>银河星点 · 流星 · 双层描边 · 星芒</small></span>
-      <span class="theme-check">✓</span>
+    <button class="theme-opt" data-theme="starlight" type="button" data-page-node-id="NxrBDVV30cD9opj8miH8oU">
+      <span class="theme-swatches" data-page-node-id="gAWAvrsBGTxj9BjS0tPx2n"><i style="background:#7b4bd8" data-page-node-id="uPW09pSF9EDYbreiMzp1Yi"></i><i style="background:#e569b6" data-page-node-id="8eoD85ubJi3OvNFcu4S4sx"></i><i style="background:#ffc94d" data-page-node-id="SFvG1O2sEQQv3dQvbKJXU2"></i></span>
+      <span class="theme-txt" data-page-node-id="xZZrFsfGu3vutjZly3S6Le"><b data-page-node-id="C8OwFiqurZ3bkbbzPU2bha">星屑魔法少女</b><small data-page-node-id="bKFaFK6KFL5agbbHkBfPCV">银河星点 · 流星 · 双层描边 · 星芒</small></span>
+      <span class="theme-check" data-page-node-id="YnFDtZ0qGrEjGOjKfgGoqw">✓</span>
     </button>
-    <button class="theme-opt" data-theme="cyber" type="button">
-      <span class="theme-swatches"><i style="background:#0d1126"></i><i style="background:#4ff0e0"></i><i style="background:#ff5fa8"></i></span>
-      <span class="theme-txt"><b>赛博电波</b><small>深色霓虹 · 扫描线 · 故障字 · HUD</small></span>
-      <span class="theme-check">✓</span>
+    <button class="theme-opt" data-theme="cyber" type="button" data-page-node-id="NLWlVMWTFIdutxobs5ATW8">
+      <span class="theme-swatches" data-page-node-id="LHpbFQIn85GnkkTD1SRufF"><i style="background:#0d1126" data-page-node-id="pZkoftZsW4GWWBWDnqCFmA"></i><i style="background:#4ff0e0" data-page-node-id="AsCfDDuFt8gncLb5Us3oZ2"></i><i style="background:#ff5fa8" data-page-node-id="LhGQw7lJm3LoHWb2G6juh9"></i></span>
+      <span class="theme-txt" data-page-node-id="07x4EWzomKYxASthJjKwFd"><b data-page-node-id="v3JEaCAZqVjtlAZ7qfCvg6">赛博电波</b><small data-page-node-id="tsuu8GUaHxOPxltQYHa1Ui">深色霓虹 · 扫描线 · 故障字 · HUD</small></span>
+      <span class="theme-check" data-page-node-id="VAJZLs0n3SZEgBNf63hjyy">✓</span>
     </button>
-    <button class="theme-opt" data-theme="wafu" type="button">
-      <span class="theme-swatches"><i style="background:#c94b4b"></i><i style="background:#2b3a67"></i><i style="background:#c9a24b"></i></span>
-      <span class="theme-txt"><b>和风樱花</b><small>和纸朱印 · 青海波 · 樱吹雪</small></span>
-      <span class="theme-check">✓</span>
+    <button class="theme-opt" data-theme="wafu" type="button" data-page-node-id="FGL1oAP7txIoPE9X0Sirk0">
+      <span class="theme-swatches" data-page-node-id="vtW7HnszCoE0REHgQjHIqO"><i style="background:#c94b4b" data-page-node-id="lVlK5nYiopUTAL07R5i9cE"></i><i style="background:#2b3a67" data-page-node-id="CwU695MPL1pwYfRFf3CmV7"></i><i style="background:#c9a24b" data-page-node-id="maG7P6eukCL2NITN3AZfhn"></i></span>
+      <span class="theme-txt" data-page-node-id="D5CHzB6gHsPJrHhY5H568t"><b data-page-node-id="mZTvt9UuZLUcRmvUbtPqci">和风樱花</b><small data-page-node-id="BqrfkSyHHiOiVuVWjTGxF1">和纸朱印 · 青海波 · 樱吹雪</small></span>
+      <span class="theme-check" data-page-node-id="4AfbySgU02VpnDK3Jr9WzN">✓</span>
     </button>
-    <button class="theme-opt" data-theme="sakura" type="button">
-      <span class="theme-swatches"><i style="background:#ff6fa8"></i><i style="background:#9b7bff"></i><i style="background:#ffd36e"></i></span>
-      <span class="theme-txt"><b>樱花甜心</b><small>粉紫奶油 · 波点 · 糖果色（初版）</small></span>
-      <span class="theme-check">✓</span>
+    <button class="theme-opt" data-theme="sakura" type="button" data-page-node-id="SO8SMKutlK0RH6Nf5BdNaw">
+      <span class="theme-swatches" data-page-node-id="khLGBHggp79DBxPIvIIpQP"><i style="background:#ff6fa8" data-page-node-id="8bTpgntiChMfl8w8zLFdT2"></i><i style="background:#9b7bff" data-page-node-id="Vpz4hjslgTjaF4Gd0PpAMf"></i><i style="background:#ffd36e" data-page-node-id="bz9uhcWtzeA4QEfDayeRex"></i></span>
+      <span class="theme-txt" data-page-node-id="p7NLJy43EdAREUTFVH5mwf"><b data-page-node-id="rg2MWxUzDJrnxWqLzMan4N">樱花甜心</b><small data-page-node-id="8geeTuPUlHWok8GKeE9OV5">粉紫奶油 · 波点 · 糖果色（初版）</small></span>
+      <span class="theme-check" data-page-node-id="BhKGZaX3OhEM1zGjWMTfY7">✓</span>
     </button>
-    <button class="theme-opt" data-theme="classic" type="button">
-      <span class="theme-swatches"><i style="background:#3b6cf0"></i><i style="background:#e4e9f2"></i><i style="background:#ffffff"></i></span>
-      <span class="theme-txt"><b>简约原版</b><small>冷蓝白底 · 细边框 · 无装饰（改版前）</small></span>
-      <span class="theme-check">✓</span>
+    <button class="theme-opt" data-theme="classic" type="button" data-page-node-id="Fki2eOfk2f6lmZPpDNHmLJ">
+      <span class="theme-swatches" data-page-node-id="k3iuxj98JEcacdX3lkY1tz"><i style="background:#3b6cf0" data-page-node-id="musWMd8EP35mjIhs7A8xr9"></i><i style="background:#e4e9f2" data-page-node-id="R20PUGU3iJ6w2RfW1Ca5cU"></i><i style="background:#ffffff" data-page-node-id="aZgwqywCXRPIGV44ElAIpH"></i></span>
+      <span class="theme-txt" data-page-node-id="OaQMjMCpm0T2bQqqk0Gyo6"><b data-page-node-id="tPOxseZoobsCvuBOK4czdc">简约原版</b><small data-page-node-id="DvDiyk3NL0WpCgxuP5BCRR">冷蓝白底 · 细边框 · 无装饰（改版前）</small></span>
+      <span class="theme-check" data-page-node-id="8REMjaD0AEu9azl4GVbEsO">✓</span>
     </button>
   </div>
-  <div class="stats" id="stats"></div>
+  <div class="stats" id="stats" data-page-node-id="5QYeFkqlPEHqsMtB4jz4JC"></div>
 </header>
 
-<nav id="nav"></nav>
+<nav id="nav" data-page-node-id="MhbqWhDy5vbfCZJsy1O4V3"></nav>
 
-<div class="banner" id="appBanner" style="display:none">
-  <span id="appBannerText"></span>
-  <button type="button" id="appBannerClose">知道了</button>
+<div class="banner" id="appBanner" style="display:none" data-page-node-id="KuCY8Sb4DTP7nlVlekhmrO">
+  <span id="appBannerText" data-page-node-id="6hP38WZa5vGkAOcjIVaKGH"></span>
+  <button type="button" id="appBannerClose" data-page-node-id="DuQABUUx4wzbjv2Bkq1YEy">知道了</button>
 </div>
 
-<main>
+<main data-page-node-id="hxHFDzxxHmGLhuqEAGjFl4">
   <!-- 台账 -->
-  <section class="panel" id="panel-ledger">
-    <div class="subtabs" id="ledgerTabs"></div>
-    <div class="card">
-      <div class="toolbar">
-        <button class="btn" id="btnAddRec">＋ 新增记录</button>
-        <button class="btn ghost" id="btnPasteRec">＋ 粘贴导入</button>
-        <input id="searchBox" type="search" name="ledgerSearch" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="搜索：城市 / 备注 / 联系方式…" style="width:240px">
-        <select id="statusFilter"></select>
-        <span class="muted" id="ledgerCount"></span>
+  <section class="panel" id="panel-ledger" data-page-node-id="5WJ2J8dbPht6Mo6WoTNYqe">
+    <div class="subtabs" id="ledgerTabs" data-page-node-id="KWgSqGzZcHKIdz8WVZX2bJ"></div>
+    <div class="card" data-page-node-id="9ivylI37q7DKyUFOK1H2lC">
+      <div class="toolbar" data-page-node-id="J91Ih5HA2YY40Us5hV2gLq">
+        <button class="btn" id="btnAddRec" data-page-node-id="vxJMgSL4z1Q0sRIpKXAckd">＋ 新增记录</button>
+        <button class="btn ghost" id="btnPasteRec" data-page-node-id="xL9NXqDiWU4kzoNxRsG14l">＋ 粘贴导入</button>
+        <input id="searchBox" type="search" name="ledgerSearch" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="搜索：城市 / 备注 / 联系方式…" style="width:240px" data-page-node-id="Q3VALwVkweMYLB7e82jlCz">
+        <select id="statusFilter" data-page-node-id="BQ7Fqon27CbLap5I2T8JgE"></select>
+        <span class="muted" id="ledgerCount" data-page-node-id="h0uwBzGMxUB4KXArpFzFpj"></span>
       </div>
-      <div class="wrap-table">
-        <table>
-          <thead id="ledgerHead"></thead>
-          <tbody id="ledgerBody"></tbody>
+      <div class="wrap-table" data-page-node-id="8zYOOJaU0whAk5O1U2tLTN">
+        <table data-page-node-id="2Q27urOZxFbTlHfRfAVG21">
+          <thead id="ledgerHead" data-page-node-id="aHjKKKSHMXyF7xvT8B9rOC"></thead>
+          <tbody id="ledgerBody" data-page-node-id="VUOGMPop6TTCxxXJG6Zxqd"></tbody>
         </table>
       </div>
     </div>
   </section>
 
   <!-- 群发 -->
-  <section class="panel" id="panel-broadcast">
-    <div class="card">
-      <h3>群发生成器</h3>
-      <div class="toolbar">
-        <label class="chk"><input type="radio" name="aud" value="carrier" checked> 发给乘机人（宠物订单）</label>
-        <label class="chk"><input type="radio" name="aud" value="client"> 发给甲方（乘机人行程）</label>
-        <span style="flex:1"></span>
-        <select id="bcMode">
-          <option value="full">完整群发（全部在找）</option>
-          <option value="pick">智能精选（按匹配度取前 N 条）</option>
-          <option value="incr">增量群发（今日新增/确认）</option>
+  <section class="panel" id="panel-broadcast" data-page-node-id="VNBgTJ7qVKdXCKwIzBzaML">
+    <div class="card" data-page-node-id="2o52lOh4RTol87GX2d5Pfy">
+      <h3 data-page-node-id="md4X4ZVmlrrRCqeb2yS46V">群发生成器</h3>
+      <div class="toolbar" data-page-node-id="ZmHpfSJr583O0A3imJBOF7">
+        <label class="chk" data-page-node-id="mACaQy0nurWYteGYPTSm3s"><input type="radio" name="aud" value="carrier" checked data-page-node-id="F3dSYs89amCaUXh9kvo24V"> 发给乘机人（宠物订单）</label>
+        <label class="chk" data-page-node-id="bVR0MsqguoSLHFLsFE6CEa"><input type="radio" name="aud" value="client" data-page-node-id="cNUyQdLSG5csldvRVP1Qp3"> 发给甲方（乘机人行程）</label>
+        <span style="flex:1" data-page-node-id="8B2bdUHuGG6Z8hZE9lXYox"></span>
+        <select id="bcMode" data-page-node-id="OkKPFVRoFIPuTTjriXoccS">
+          <option value="full" data-page-node-id="uJtYT6m49TX6U4OBjNBgEO">完整群发（全部在找）</option>
+          <option value="pick" data-page-node-id="fvQcciTbSHdb9buru0EtIV">智能精选（按匹配度取前 N 条）</option>
+          <option value="incr" data-page-node-id="Lz08yuyjwG1H9Q0ZA7DyuM">增量群发（今日新增）</option>
+          <option value="confirm">增量群发（今日确认）</option>
         </select>
-        <input id="bcTopN" type="number" min="5" max="60" value="15" title="精选条数" style="width:62px">
-        <label class="chk"><input type="checkbox" id="bcHeader"> 带抬头</label>
-        <button class="btn" id="btnGenText">生成文案</button>
+        <input id="bcTopN" type="number" min="5" max="60" value="15" title="精选条数" style="width:62px" data-page-node-id="sAn6v2GXuppNwdNrkcOKcs">
+        <label class="chk" data-page-node-id="eyorC2G7qTdXIjAqDacO2z"><input type="checkbox" id="bcHeader" data-page-node-id="tgGItLZbCFxukuMAnpmmGT"> 带抬头</label>
+        <button class="btn" id="btnGenText" data-page-node-id="RTowh5fnDnndKikFm7cWBF">生成文案</button>
       </div>
-      <div class="split">
-        <div>
+      <div class="split" data-page-node-id="tKolOucPHIW5sG8BqgYmuv">
+        <div data-page-node-id="cMAzXwbcES010ygdjV9OEN">
           <textarea class="output" id="bcText" placeholder="点击「生成文案」后在此显示，可手动修改…"></textarea>
-          <div class="toolbar" style="margin-top:10px">
-            <button class="btn ghost" id="btnCopyText">复制文案</button>
-            <span class="hint" id="bcCount"></span>
+          <div class="toolbar" style="margin-top:10px" data-page-node-id="koh1gudHRVrlEPCrVzFU2f">
+            <button class="btn ghost" id="btnCopyText" data-page-node-id="A4GNFur2yFLNzIPPP559c3">复制文案</button>
+            <span class="hint" id="bcCount" data-page-node-id="4NAUWOY2sPaDjrFgqTNxn7"></span>
           </div>
         </div>
-        <div>
-          <div class="toolbar">
-            <label class="chk"><input type="checkbox" id="bcSplitDir"> 按方向分段（出国 / 回国）</label>
-            <label class="chk"><input type="checkbox" id="bcValidOnly" checked> 仅仍有效</label>
+        <div data-page-node-id="nEQUZhLQl0qFLv6gFctHeT">
+          <div class="toolbar" data-page-node-id="D9XIDyvQCiG1KHEWx6tyVW">
+            <label class="chk" data-page-node-id="HxANBnMrXup5HCZGbGzGBW"><input type="checkbox" id="bcSplitDir" data-page-node-id="TzKdCch5kOLjIL5yr7muCy"> 按方向分段（出国 / 回国）</label>
+            <label class="chk" data-page-node-id="dPOLzkr2WvBmp32l1XPI3P"><input type="checkbox" id="bcValidOnly" checked data-page-node-id="pjaNNDrm7gMVKcL4LtEN2j"> 仅仍有效</label>
           </div>
-          <div class="toolbar">
-            <label class="chk"><input type="checkbox" id="bcUseNote"> 附带「此外」说明</label>
-            <input id="bcNote" placeholder="此外说明，如：回国带烟，可提前预约" style="flex:1; min-width:200px">
+          <div class="toolbar" data-page-node-id="rq1z5gBPRaFHhMSMBSVT6C">
+            <label class="chk" data-page-node-id="0hvfGEDdplwGbi7I4wgo6s"><input type="checkbox" id="bcUseNote" data-page-node-id="m9zzRIw1yPHi6GiTrDDR89"> 附带「此外」说明</label>
+            <input id="bcNote" placeholder="此外说明，如：回国带烟，可提前预约" style="flex:1; min-width:200px" data-page-node-id="Mw7JgkoPNcqwV3EHiY8Fd9">
           </div>
-          <div class="toolbar">
-            <button class="btn" id="btnGenImg">生成表格图片（去联系方式）</button>
-            <button class="btn ghost" id="btnDownloadImg">下载图片</button>
-            <button class="btn ghost" id="btnCopyImg">复制图片</button>
+          <div class="toolbar" data-page-node-id="WHi2ygi8DvvUbfWTS921Xh">
+            <button class="btn" id="btnGenImg" data-page-node-id="n8TAgSDKwhU7NxLMwlXWWb">生成表格图片（去联系方式）</button>
+            <button class="btn ghost" id="btnDownloadImg" data-page-node-id="fFu3QXftxsOyivFOyJZSbr">下载图片</button>
+            <button class="btn ghost" id="btnCopyImg" data-page-node-id="kAq3EE86oUMykm6jMXAzJS">复制图片</button>
           </div>
-          <div class="imgbox" id="bcImgWrap"></div>
+          <div class="imgbox" id="bcImgWrap" data-page-node-id="328SSA0pxslfsEqPxjl8ai"></div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- 匹配池 -->
-  <section class="panel" id="panel-pool">
-    <div class="card">
-      <h3>匹配池 · 待跟进意向</h3>
-      <p class="hint" style="margin:0 0 8px">
-        每行一条：<b>时间 甲方→客户 出发地 目的地</b>，例如「11月28日 小谭→Oct_grace 温哥华 上海」。可一次粘贴多行。<br>
-        录入后 <b>48 小时</b>内有效，到期自动失效；谈成后点「转成单」补充金额等信息即可。
+  <section class="panel" id="panel-pool" data-page-node-id="AwXtxkuOIuf7XYQCACIxee">
+    <div class="card" data-page-node-id="lSSlm7LRhEQupJAZOQDjh8">
+      <h3 data-page-node-id="opVvQHaQIUut8jU20PH8YF">匹配池 · 待跟进意向</h3>
+      <p class="hint" style="margin:0 0 8px" data-page-node-id="nQft4partcGiITWh4W6SOi">
+        每行一条：<b data-page-node-id="ASQI2N1AEjWCcyuNJZUVsX">时间 甲方 客户 出发地 目的地</b>，箭头可省略。例如「11月中 小谭 Oct_grace 上海 温哥华」。可一次粘贴多行。<br data-page-node-id="Wx4B39MHn9xuyvsFtaMiDE">
+        时间支持「11月28日 / 11月中 / 11月底 / 今天」，不写时间也可以。录入后 <b data-page-node-id="rkWAEQmDICYvwbINto8upI">48 小时</b>内有效，谈成后点「转成单」补充金额即可。
       </p>
-      <textarea id="poolInput" rows="3" style="width:100%; box-sizing:border-box" placeholder="11月28日 小谭→Oct_grace 温哥华 上海&#10;11月30日 阿May→Kevin 上海 洛杉矶"></textarea>
-      <div class="toolbar" style="margin:10px 0 0">
-        <button class="btn" id="btnPoolAdd">加入匹配池</button>
-        <span class="hint" id="poolMsg"></span>
+      <textarea id="poolInput" rows="3" style="width:100%; box-sizing:border-box" placeholder="11月中 小谭 Oct_grace 上海 温哥华&#10;11月28日 阿May→Kevin 温哥华 上海"></textarea>
+      <div class="toolbar" style="margin:10px 0 0" data-page-node-id="9ujnFHflXzEfOtvTxkoIa4">
+        <button class="btn" id="btnPoolAdd" data-page-node-id="m3RCpAcwjDLteuh3NEF2wt">加入匹配池</button>
+        <span class="hint" id="poolMsg" data-page-node-id="3jFbjhXRl1etVrSFcCcXKC"></span>
       </div>
     </div>
-    <div class="card">
-      <div class="toolbar" style="margin-bottom:10px">
-        <strong style="font-size:14px">待跟进</strong>
-        <span class="muted" id="poolCount"></span>
-        <span style="flex:1"></span>
-        <label class="chk"><input type="checkbox" id="poolShowArchived"> 显示已失效 / 已成单</label>
+    <div class="card" data-page-node-id="IZ1fnsjGzp81Dl6zFQU9Yw">
+      <div class="toolbar" style="margin-bottom:10px" data-page-node-id="okzBlpQWiLkzbMba5zgxFa">
+        <strong style="font-size:14px" data-page-node-id="30a6SCG64hJVGWF9GRjOG6">待跟进</strong>
+        <span class="muted" id="poolCount" data-page-node-id="RYfBPdPdC44dqrZrjw8iLT"></span>
+        <span style="flex:1" data-page-node-id="zEjwhtEiHnmCGC3aJ6ZgIN"></span>
+        <label class="chk" data-page-node-id="WDTEzGcno8mGgBBnfTogFK"><input type="checkbox" id="poolShowArchived" data-page-node-id="adjtJSNPrEqAmb2YkJmrvo"> 显示已失效 / 已成单</label>
       </div>
-      <div id="poolBody"></div>
+      <div id="poolBody" data-page-node-id="Pzf5FhFzh6AceVHEdOnCkl"></div>
     </div>
   </section>
 
   <!-- 成单与款项 -->
-  <section class="panel" id="panel-deals">
-    <div class="card">
-      <h3>成单与结单 · 按月结算</h3>
-      <div class="toolbar">
-        <label class="chk" for="dealMonth">月份</label>
-        <select id="dealMonth" style="min-width:132px"></select>
-        <button class="btn" id="btnAddDeal">＋ 新增成单</button>
-        <button class="btn ghost" id="btnAddOtherDeal">＋ 其他成单</button>
-        <span class="hint" id="dealTodayHint"></span>
+  <section class="panel" id="panel-deals" data-page-node-id="JyIVbOU4C7cUgvlXmQGwsl">
+    <div class="card" data-page-node-id="S6JKDXoFRiIBGfydNsOr1F">
+      <h3 data-page-node-id="taOUuHCASHhVHHayLgKOap">成单与结单 · 按月结算</h3>
+      <div class="toolbar" data-page-node-id="NoQzGU55Czf7voet4HfJmE">
+        <label class="chk" for="dealMonth" data-page-node-id="3JyaCD1IOiwi26BdaGiOtl">月份</label>
+        <select id="dealMonth" style="min-width:132px" data-page-node-id="SnuSDuJcIz7biY02fnJ4rh"></select>
+        <button class="btn" id="btnAddDeal" data-page-node-id="lFYMcMvVdMABNQOcH0WJVs">＋ 新增成单</button>
+        <button class="btn ghost" id="btnAddOtherDeal" data-page-node-id="0Pfql4iXwuHuMPmkcwX51U">＋ 其他成单</button>
+        <span class="hint" id="dealTodayHint" data-page-node-id="owpAlY7L4DuKd1BXae8yki"></span>
       </div>
-      <p class="hint" style="margin:0 0 4px">成单 = 当月成交且未结单（进行中）；结单 = 当月结单（尾款标记「已收」）。出国 / 回国分开显示。</p>
-      <div id="dealsBody"></div>
+      <p class="hint" style="margin:0 0 4px" data-page-node-id="e2BIxngnTNM4FEsxGtVZVF">成单 = 当月成交且未结单（进行中）；结单 = 当月结单（尾款标记「已收」）。出国 / 回国分开显示。</p>
+      <div id="dealsBody" data-page-node-id="FvVTJzJ5n9XDNDqetRGAg8"></div>
     </div>
   </section>
 
   <!-- 日报 -->
-  <section class="panel" id="panel-daily">
-    <div class="card">
-      <h3>今日工作记录 · <span id="dailyDate"></span></h3>
-      <div class="toolbar">
-        <button class="btn ghost" id="btnCopyDaily">复制今日日报</button>
-        <span class="hint">数据由台账自动汇总；「今日群发次数」在你点「复制文案」时自动 +1。</span>
+  <section class="panel" id="panel-daily" data-page-node-id="SOzE0nq7GZvuF3eIRksRzc">
+    <div class="card" data-page-node-id="nVcuqmnpmiE0J32G04H8bR">
+      <h3 data-page-node-id="clASJJuzTfdcbBaPYb4JEh">今日工作记录 · <span id="dailyDate" data-page-node-id="Ms3YjA5OOKiIPpxJlc9fZW"></span></h3>
+      <div class="toolbar" data-page-node-id="fMsLCGL5q512bmbDf7lL8j">
+        <button class="btn ghost" id="btnCopyDaily" data-page-node-id="GGpjlbspzjeOsOXxfhUBSe">复制今日日报</button>
+        <span class="hint" data-page-node-id="KZAbwz5lLO0gbhY0NRSBRX">数据由台账自动汇总；「今日群发次数」在你点「复制文案」时自动 +1。</span>
       </div>
-      <div id="dailyBody"></div>
+      <div id="dailyBody" data-page-node-id="Bbxhn3eQhxcrKrvk9QmKRO"></div>
     </div>
   </section>
 
   <!-- 周报 / 月报 -->
-  <section class="panel" id="panel-report">
-    <div class="card">
-      <h3>周报 / 月报 · 数据分析</h3>
-      <div class="subtabs" id="reportRange">
-        <button data-r="week" class="active">本周</button>
-        <button data-r="lastweek">上周</button>
-        <button data-r="month">本月</button>
-        <button data-r="lastmonth">上月</button>
-        <button data-r="all">全部</button>
+  <section class="panel" id="panel-report" data-page-node-id="vAZZCIzDElT2biweEX9DLZ">
+    <div class="card" data-page-node-id="e06PwSEBWmMktRDIrgkz0M">
+      <h3 data-page-node-id="f77TaNMnO4GleUPczoMkAD">周报 / 月报 · 数据分析</h3>
+      <div class="subtabs" id="reportRange" data-page-node-id="jXWylCj0hEnUZQjRJLLp1C">
+        <button data-r="week" class="active" data-page-node-id="MNUBLJ7JQehIvEsi2kva5h">本周</button>
+        <button data-r="lastweek" data-page-node-id="DJJQPhJAePszOwjaMJb36w">上周</button>
+        <button data-r="month" data-page-node-id="pFAxHv8G8zJZ1pCXc5VUrS">本月</button>
+        <button data-r="lastmonth" data-page-node-id="jcAULNbt0CaLQ2ocxrs95C">上月</button>
+        <button data-r="all" data-page-node-id="6f3t2IRHhBGNbsMQuq3v7f">全部</button>
       </div>
-      <div class="toolbar">
-        <span class="hint" id="reportPeriod"></span>
-        <span style="flex:1"></span>
-        <button class="btn ghost" id="btnCopyReport">复制报表文案</button>
+      <div class="toolbar" data-page-node-id="rBjSg4pyaaXjdsP5AoVnwI">
+        <span class="hint" id="reportPeriod" data-page-node-id="TqHYLYER4LMQ7lBPMpeDaW"></span>
+        <span style="flex:1" data-page-node-id="IfVHcuS1jMj5pNZRErK1NQ"></span>
+        <button class="btn ghost" id="btnCopyReport" data-page-node-id="ONFPuKz3nFuWEBz8j3Ctlx">复制报表文案</button>
       </div>
-      <div id="reportBody"></div>
+      <div id="reportBody" data-page-node-id="ofSio2uoVB3fzYaDiDs8WE"></div>
     </div>
   </section>
 
   <!-- 数据 -->
-  <section class="panel" id="panel-data">
-    <div class="card">
-      <h3>GitHub 云同步（免部署 · 出差换机首选）</h3>
-      <div class="toolbar">
-        <input id="ghToken" type="password" name="ghSyncToken" autocomplete="off" placeholder="粘贴 GitHub Token（只需勾选 gist 权限）" style="min-width:320px">
-        <button class="btn" id="btnGhConnect">连接并创建同步</button>
-        <button class="btn ghost" id="btnGhPush" style="display:none">立即上传</button>
-        <button class="btn ghost" id="btnGhPull" style="display:none">立即拉取</button>
-        <button class="btn gray" id="btnGhOff" style="display:none">断开</button>
+  <section class="panel" id="panel-data" data-page-node-id="7AegbmQC7HXHiTLjM4roqR">
+    <div class="card" data-page-node-id="bUWOpZlsR2OhqrgEyYDatW">
+      <h3 data-page-node-id="J1gRjQIyD0oyMCcbyXmy1q">GitHub 云同步（免部署 · 出差换机首选）</h3>
+      <div class="toolbar" data-page-node-id="PIhScK2o22A5r5vJrC4zat">
+        <input id="ghToken" type="password" name="ghSyncToken" autocomplete="off" placeholder="粘贴 GitHub Token（只需勾选 gist 权限）" style="min-width:320px" data-page-node-id="ETaylQTBnXJHBI828dpkAA">
+        <button class="btn" id="btnGhConnect" data-page-node-id="An08esNASGWEMQEoNcjzCg">连接并创建同步</button>
+        <button class="btn ghost" id="btnGhPush" style="display:none" data-page-node-id="qzSWW8l52yMAipgTJfJANG">立即上传</button>
+        <button class="btn ghost" id="btnGhPull" style="display:none" data-page-node-id="hE6IhSPczcfM7K650lvoB6">立即拉取</button>
+        <button class="btn gray" id="btnGhOff" style="display:none" data-page-node-id="9vrTRjiAp4fI7gMfCKY4fo">断开</button>
       </div>
-      <div class="hint" id="ghStatus" style="margin:6px 0 2px"></div>
-      <p class="hint">
-        · 不需要服务器、不用买域名：页面放 GitHub Pages，数据存在你自己的<b>私有 Gist</b> 里。<br>
-        · Token 只保存在当前浏览器，不上传任何第三方；Gist 为私有，只有 Token 能读写。<br>
-        · 连接后每次改动<b>自动上传</b>；手机 / 公司电脑打开同一网址、粘贴同一个 Token，会自动拉取最新数据。<br>
+      <div class="hint" id="ghStatus" style="margin:6px 0 2px" data-page-node-id="F92FYZygA4My4ixeglieeZ"></div>
+      <p class="hint" data-page-node-id="HWY1KiMHVAgdfY9NA52TmF">
+        · 不需要服务器、不用买域名：页面放 GitHub Pages，数据存在你自己的<b data-page-node-id="QHx7JW5fTysvaLBQUSJ4GP">私有 Gist</b> 里。<br data-page-node-id="mMjEfm2TJbS3u9Ne4WcTXQ">
+        · Token 只保存在当前浏览器，不上传任何第三方；Gist 为私有，只有 Token 能读写。<br data-page-node-id="uhS26c160aTlrrOx9A7v57">
+        · 连接后每次改动<b data-page-node-id="LtLjzbJUl1YAyy0srIoxnn">自动上传</b>；手机 / 公司电脑打开同一网址、粘贴同一个 Token，会自动拉取最新数据。<br data-page-node-id="dauhKRoCGDN2AEceFZJJEI">
         · 换设备时如果服务器上已有数据，会按「较新时间」自动决定拉取还是上传。
       </p>
     </div>
 
     <!-- 自建服务器方案已于 2026-11-09 删除：卡片隐藏，只保留 GitHub 同步 -->
-    <div class="card" style="display:none" aria-hidden="true">
-      <h3>自建服务器同步（需要自己部署服务器）</h3>
-      <div class="toolbar">
-        <button class="btn" id="btnSyncLogin">登录</button>
-        <button class="btn ghost" id="btnSyncPull" style="display:none">从服务器拉取</button>
-        <button class="btn ghost" id="btnSyncPush" style="display:none">上传到服务器</button>
-        <button class="btn gray" id="btnSyncLogout" style="display:none">退出登录</button>
+    <div class="card" style="display:none" aria-hidden="true" data-page-node-id="w0xhGjcNDMYzXA5Qpe1iSB">
+      <h3 data-page-node-id="eVUNLEF2UcWGAr2uFBoqJL">自建服务器同步（需要自己部署服务器）</h3>
+      <div class="toolbar" data-page-node-id="3XzYc8GfxRJlKKWX7xW1vT">
+        <button class="btn" id="btnSyncLogin" data-page-node-id="MV9VWoO1A1y7DOJvHJzpyH">登录</button>
+        <button class="btn ghost" id="btnSyncPull" style="display:none" data-page-node-id="SDiDUJjJQcC0IF8M2QE300">从服务器拉取</button>
+        <button class="btn ghost" id="btnSyncPush" style="display:none" data-page-node-id="kbGXKqsdT3o07FWxavuivz">上传到服务器</button>
+        <button class="btn gray" id="btnSyncLogout" style="display:none" data-page-node-id="guHFWfCtHpns6rXT8QJ4u0">退出登录</button>
       </div>
-      <div class="hint" id="syncStatus" style="margin:6px 0 2px"></div>
-      <p class="hint">
-        · 把本页部署到你自己的服务器（私域网站），用 <b>https://</b> 打开 → 输入访问密码登录，数据就存在服务器上。<br>
-        · 登录后每次改动会<b>自动上传</b>；换电脑只需打开同一个网址、登录，数据自动跟着走，<b>不用网盘拷贝</b>。<br>
-        · 没部署 / 断网时自动退回<b>本地模式</b>，数据仍存在本机浏览器，不报错、不丢。<br>
-        · 两台机器<b>以「较新时间」为准</b>，会覆盖不合并；出差期间尽量只用一台编辑。
+      <div class="hint" id="syncStatus" style="margin:6px 0 2px" data-page-node-id="vqf67mzbkhmsZAEdz9FKQS"></div>
+      <p class="hint" data-page-node-id="4FBeTI7XzunZss2w92V7ry">
+        · 把本页部署到你自己的服务器（私域网站），用 <b data-page-node-id="FDppnl8GU68rzSiTAIwHVA">https://</b> 打开 → 输入访问密码登录，数据就存在服务器上。<br data-page-node-id="5A5uIiBDrEBAush7HeYeiO">
+        · 登录后每次改动会<b data-page-node-id="DnSiAJ1pczxAJbZYkFY05N">自动上传</b>；换电脑只需打开同一个网址、登录，数据自动跟着走，<b data-page-node-id="S8zBsCrqChw8ZOX4uE13Ih">不用网盘拷贝</b>。<br data-page-node-id="6LAH9uw98EoV1KOYGLN2vr">
+        · 没部署 / 断网时自动退回<b data-page-node-id="j64sJGgiuWj1wvOFXfcujK">本地模式</b>，数据仍存在本机浏览器，不报错、不丢。<br data-page-node-id="pHp1F4dSUiCGK1Y5wignbP">
+        · 两台机器<b data-page-node-id="Ns5Q8BS5GMGDMuJv2kLxH1">以「较新时间」为准</b>，会覆盖不合并；出差期间尽量只用一台编辑。
       </p>
     </div>
 
-    <div class="card">
-      <h3>粘贴导入（推荐，预览里也能用）</h3>
-      <div class="toolbar">
-        <select id="pasteKind">
-          <option value="order">甲方端（宠物订单，含费用列）</option>
-          <option value="pax">乘客端（乘机人行程）</option>
-          <option value="deal">成单（成交与款项记录）</option>
+    <div class="card" data-page-node-id="Dr14KKpsXjNMuX5ylxRrIA">
+      <h3 data-page-node-id="MRLOZkQ12sU9fB6vxXBpQs">粘贴导入（推荐，预览里也能用）</h3>
+      <div class="toolbar" data-page-node-id="x2XJ4P7yDx3RQX4EHSbIKh">
+        <select id="pasteKind" data-page-node-id="gy7sVhNqhP1PUyHEk2GBvi">
+          <option value="order" data-page-node-id="dbguFbh5QAPDjajECcFuba">甲方端（宠物订单，含费用列）</option>
+          <option value="pax" data-page-node-id="a7sN9hoxgNhPnueNR3OEIg">乘客端（乘机人行程）</option>
+          <option value="deal" data-page-node-id="dmTGN1TLncoHYIr4uH8qix">成单（成交与款项记录）</option>
         </select>
-        <select id="pasteDir">
-          <option value="out">出国</option>
-          <option value="in">回国</option>
+        <select id="pasteDir" data-page-node-id="6Iu99dDRwMVuJ7pLiyOgq5">
+          <option value="out" data-page-node-id="FlcqV4J66EVJRKAiAaTC1d">出国</option>
+          <option value="in" data-page-node-id="abAsL9teAEjgFLZE1XKfFH">回国</option>
         </select>
-        <label class="chk" id="pasteAutoWrap"><input type="checkbox" id="pasteAuto" checked> 自动识别方向</label>
-        <button class="btn" id="btnPasteImport">解析并追加</button>
+        <label class="chk" id="pasteAutoWrap" data-page-node-id="ruHVe3UtsZJOL3GiA49Zu6"><input type="checkbox" id="pasteAuto" checked data-page-node-id="zjnzbaCQ0UY7ehtCZHEVed"> 自动识别方向</label>
+        <button class="btn" id="btnPasteImport" data-page-node-id="2yskAJxtnKghfCM48alWOt">解析并追加</button>
       </div>
       <textarea id="pasteArea" style="width:100%;height:170px;font-size:13px;line-height:1.6"
         placeholder="在 Excel 里选中要导入的单元格 → Ctrl+C 复制 → 粘贴到这里。&#10;可以直接粘贴整块（含「时间/出发地/目的地…」表头，甚至左右两块一起）；没有表头时请取消「自动识别方向」并选择上方的方向。&#10;成单可直接粘贴「导出台账（Excel）」里那张「成单」表的内容。"></textarea>
-      <p class="hint" id="pasteHint">列顺序需为：时间 / 出发地 / 目的地 / 航司要求(或航司) / 备注 / 费用(仅甲方端) / 联系方式。</p>
+      <p class="hint" id="pasteHint" data-page-node-id="5Hqt1WPdpzyDPle0KPExL8">列顺序需为：时间 / 出发地 / 目的地 / 航司要求(或航司) / 备注 / 费用(仅甲方端) / 联系方式。</p>
     </div>
 
-    <div class="card">
-      <h3>数据备份 / 文件导入导出</h3>
-      <div class="toolbar">
-        <button class="btn ghost" id="btnExportJson">导出备份（JSON）</button>
-        <label class="btn ghost" for="fileJson">导入备份（JSON）</label>
-        <button class="btn ghost" id="btnExportXlsx">导出台账+成单（Excel）</button>
-        <label class="btn ghost" for="fileXlsx">导入台账/成单（Excel）</label>
-        <input type="file" id="fileJson" accept=".json" style="position:absolute;left:-9999px">
-        <input type="file" id="fileXlsx" accept=".xlsx,.xls,.csv" style="position:absolute;left:-9999px">
+    <div class="card" data-page-node-id="npky7B1ez1TQMENTjHJsCC">
+      <h3 data-page-node-id="4D6LEJGXvW2WU1PDrUDCeu">数据备份 / 文件导入导出</h3>
+      <div class="toolbar" data-page-node-id="afPI22bGSH1DqX6Ypz6ZIy">
+        <button class="btn ghost" id="btnExportJson" data-page-node-id="H3bhKHcLF9g0eB7OfLs96z">导出备份（JSON）</button>
+        <label class="btn ghost" for="fileJson" data-page-node-id="rKINi2vXaTnfhBLOzSWKQ3">导入备份（JSON）</label>
+        <button class="btn ghost" id="btnExportXlsx" data-page-node-id="fPEQaX6t25J5LobD4bQ0U3">导出台账+成单（Excel）</button>
+        <label class="btn ghost" for="fileXlsx" data-page-node-id="9Kvw4xasfDkD10M08ypaOo">导入台账/成单（Excel）</label>
+        <input type="file" id="fileJson" accept=".json" style="position:absolute;left:-9999px" data-page-node-id="iTvAk94ylKbm92bhOe5b1c">
+        <input type="file" id="fileXlsx" accept=".xlsx,.xls,.csv" style="position:absolute;left:-9999px" data-page-node-id="ukM5wOxRvKMbD7GA46VUCC">
       </div>
-      <div class="dropzone" id="dataDrop" style="margin-bottom:12px">
-        <span><b>把 JSON / Excel 文件拖到这里导入</b>（从微信、资源管理器直接拖入即可）</span>
+      <div class="dropzone" id="dataDrop" style="margin-bottom:12px" data-page-node-id="2UFUDiMt0l5bTNyy8dNLfK">
+        <span data-page-node-id="JNKVNainhHrpxmIURQ8K2z"><b data-page-node-id="rxTJxtmIPttWExfp5DcHLr">把 JSON / Excel 文件拖到这里导入</b>（从微信、资源管理器直接拖入即可）</span>
       </div>
-      <div class="toolbar" style="margin:2px 0 10px">
-        <label class="chk"><input type="checkbox" id="importDedupe" checked> 导入时跳过重复记录（联系方式 + 时间 + 行程）</label>
-        <span class="hint">关掉则保持旧行为：一律追加。</span>
+      <div class="toolbar" style="margin:2px 0 10px" data-page-node-id="RQyz2cusgacSICy5sB4tS7">
+        <label class="chk" data-page-node-id="BfuqLWTHoGeorFBbeDs3Ff"><input type="checkbox" id="importDedupe" checked data-page-node-id="K3SC3ybHDs9TVl3LMmng0l"> 导入时跳过重复记录（联系方式 + 时间 + 行程）</label>
+        <span class="hint" data-page-node-id="RbuOccW1186Wjrf96MjB6X">关掉则保持旧行为：一律追加。</span>
       </div>
-      <div class="toolbar">
-        <button class="btn gray" id="btnSample">载入示例数据</button>
-        <button class="btn ghost" id="btnSnapshots">恢复快照（最近自动备份）</button>
-        <button class="btn danger" id="btnClear">清空全部数据</button>
+      <div class="toolbar" data-page-node-id="GMT4Nk3sqXKTkMh1CEZo7O">
+        <button class="btn gray" id="btnSample" data-page-node-id="PEfeBcRbQd1BLoCr47eiOn">载入示例数据</button>
+        <button class="btn ghost" id="btnSnapshots" data-page-node-id="oB8W4s2LJpZScFbBCqDnu6">恢复快照（最近自动备份）</button>
+        <button class="btn danger" id="btnClear" data-page-node-id="ZBFUyuXRDQWPjUPYLW9PVE">清空全部数据</button>
       </div>
-      <p class="hint">
-        · 文件导入会自动识别「甲方端 / 乘客端 / 成单」等表，以及每张表里左右并排的「出国 / 回国」两块；时间列的 Excel 日期数字（如 46305）会自动转成「10月10日」。<br>
-        · 若在 Trae 预览窗口里点「导入台账」跳到空白页，请改用上面的<b>粘贴导入</b>、或把 Excel 文件<b>直接拖到本页</b>，也可以下载 html 后用 Chrome/Edge 打开再导入。<br>
-        · Excel 组件现在<b>点击时才加载</b>；若网络不通，导出会自动改存 CSV 压缩包，导入也可以直接选 .csv 文件。<br>
+      <p class="hint" data-page-node-id="jCorctyjJTbIuZZvujFkot">
+        · 文件导入会自动识别「甲方端 / 乘客端 / 成单」等表，以及每张表里左右并排的「出国 / 回国」两块；时间列的 Excel 日期数字（如 46305）会自动转成「10月10日」。<br data-page-node-id="7BdGnj81kRM00NEJtRGlnT">
+        · 若在 Trae 预览窗口里点「导入台账」跳到空白页，请改用上面的<b data-page-node-id="VBYTT9pNm1WeXjt96plcEo">粘贴导入</b>、或把 Excel 文件<b data-page-node-id="iVPy1gQP2WXDBvDFoZc0m3">直接拖到本页</b>，也可以下载 html 后用 Chrome/Edge 打开再导入。<br data-page-node-id="QKnvZ0uT8oDCHaRfHjwTJC">
+        · Excel 组件现在<b data-page-node-id="8fEvMO1jbi6rKXVPvv9ieF">点击时才加载</b>；若网络不通，导出会自动改存 CSV 压缩包，导入也可以直接选 .csv 文件。<br data-page-node-id="1rfUx4p4KMrnFgT5fxbH36">
         · 「跳过重复」默认开启，同一条记录不会因为重复导入而出现多次；导入前的确认框会显示将新增 / 跳过多少条。
       </p>
     </div>
 
-    <div class="card" id="autoBakCard">
-      <h3>自动备份到磁盘 <span class="sub">不占浏览器 10MB，多一份保险</span></h3>
-      <div class="toolbar">
-        <button class="btn" id="btnAutoBakConnect">连接 / 更换文件夹</button>
-        <button class="btn ghost" id="btnAutoBakNow">立即备份一次</button>
-        <label class="chk"><input type="checkbox" id="autoBakOn" checked> 数据改动后自动备份</label>
+    <div class="card" id="trashCard" data-page-node-id="trashCard01">
+      <h3>最近删除 <span class="sub">误删可在这里找回，保留 30 天</span></h3>
+      <div id="trashBody"></div>
+    </div>
+
+    <div class="card" id="autoBakCard" data-page-node-id="p6VqxsoyIZHNlvwz47UH71">
+      <h3 data-page-node-id="eD7mukfpQ7ja9rGC7X6Bwe">自动备份到磁盘 <span class="sub" data-page-node-id="3SLtHst1s7O2R8j9opzgVC">不占浏览器 10MB，多一份保险</span></h3>
+      <div class="toolbar" data-page-node-id="uHWUnasMIPjKIjbgHLaC1N">
+        <button class="btn" id="btnAutoBakConnect" data-page-node-id="GUeNCdjBbapLhiG3IAxL5s">连接 / 更换文件夹</button>
+        <button class="btn ghost" id="btnAutoBakNow" data-page-node-id="S7ZKQcdJNUBEeh4M0NU4Cn">立即备份一次</button>
+        <label class="chk" data-page-node-id="hpWmhLjAOx3dUwG1REk0Fx"><input type="checkbox" id="autoBakOn" checked data-page-node-id="JUReKSxWa2IX6m5IhQsoau"> 数据改动后自动备份</label>
       </div>
-      <div class="hint" id="autoBakStatus"></div>
-      <p class="hint">
-        · 位置：授权过的「宠物托运工作台」文件夹 → <b>备份\自动备份\</b>，每份一个 JSON，保留最近 20 份。<br>
+      <div class="hint" id="autoBakStatus" data-page-node-id="aaCUWGXUdZRkJrL6LD5LIN"></div>
+      <p class="hint" data-page-node-id="9IQQHWCJ4E9sBR9OMs2J4G">
+        · 位置：授权过的「宠物托运工作台」文件夹 → <b data-page-node-id="K4MTGdidJ6DEQ1dYf2z4mx">备份\自动备份\</b>，每份一个 JSON，保留最近 20 份。<br data-page-node-id="nYWJmrtYyrxg1O9SkfVOym">
         · 第一次用点「连接文件夹」选一次根目录；之后免选。没连上时只提示，不影响正常使用。
       </p>
     </div>
 
-    <div class="card">
-      <h3>台账体检 <span class="sub">缺项、金额不一致、重复记录，一次看清</span></h3>
-      <div class="toolbar">
-        <button class="btn ghost" id="btnHealth">立即检查</button>
-        <span class="hint" id="healthSummary">点「立即检查」，看看有没有缺联系方式、金额对不上、重复录入的单子。</span>
+    <div class="card" data-page-node-id="zLNY6RkaCYj8AT5SKj4Fpw">
+      <h3 data-page-node-id="Uk7T5JaNTDWSJEGmhJIFCl">台账体检 <span class="sub" data-page-node-id="dOpDPdTE1ybI3tLLv6CNs2">缺项、金额不一致、重复记录，一次看清</span></h3>
+      <div class="toolbar" data-page-node-id="jRpBCiaNITkDpr8RVem7UT">
+        <button class="btn ghost" id="btnHealth" data-page-node-id="AuYYx55ru7AwatcEXSr6zZ">立即检查</button>
+        <span class="hint" id="healthSummary" data-page-node-id="Ng3rhsEYnwu6GTyshXY7G1">点「立即检查」，看看有没有缺联系方式、金额对不上、重复录入的单子。</span>
       </div>
-      <div id="healthBody"></div>
+      <div id="healthBody" data-page-node-id="98nbzs5MaygTJKgHHZCzqt"></div>
     </div>
 
-    <div class="card">
-      <h3>版本与存储</h3>
-      <div class="hint" id="verInfo"></div>
-      <div class="toolbar" style="margin-top:10px">
-        <button class="btn ghost" id="btnSpace">查看存储占用</button>
-        <button class="btn ghost" id="btnRollbackHelp">怎么回档</button>
+    <div class="card" data-page-node-id="r6aEK8JQvwy5bwFXRXJ5Qg">
+      <h3 data-page-node-id="YY9xT01t2FjnlU3E20DnBS">版本与存储</h3>
+      <div class="hint" id="verInfo" data-page-node-id="qPIWjOV3M81sDG3CO47xhl"></div>
+      <div class="toolbar" style="margin-top:10px" data-page-node-id="YH07XRv0DCCFxG4AWueiyc">
+        <button class="btn ghost" id="btnSpace" data-page-node-id="JjDLL5aNB2nqNQlC2bXFPP">查看存储占用</button>
+        <button class="btn ghost" id="btnRollbackHelp" data-page-node-id="2E7iW3OBCxWaY9TMxREscT">怎么回档</button>
       </div>
-      <p class="hint">
-        · 每次改版都会在根目录「备份\」里留一份旧版，双击 <b>回档.bat</b> 即可整体退回；台账数据不受影响。<br>
-        · 改完新版后双击 <b>发布.bat</b>，会把主文件同步到三个部署副本并校验一致。
+      <p class="hint" data-page-node-id="GOoRLG7DHaFh0O0YcqkwMU">
+        · 每次改版都会在根目录「备份\」里留一份旧版，双击 <b data-page-node-id="Am8A0Ta4y15igZYRLXVtzF">回档.bat</b> 即可整体退回；台账数据不受影响。<br data-page-node-id="8Z2ZhyZBVdUnKeVqMulRhH">
+        · 改完新版后双击 <b data-page-node-id="aMFh5qPe6lq1pMYD4sFA8Y">发布.bat</b>，会把主文件同步到三个部署副本并校验一致。
       </p>
     </div>
   </section>
 </main>
 
-<footer>
-  <span>宠物托运工作台 · v<span id="footVer">—</span></span>
-  <span>数据只存在本机浏览器与你的同步账号里，记得定期导出备份</span>
-  <span style="margin-left:auto">改版前已自动备份，可随时回档</span>
+<footer data-page-node-id="F9FG9vwUQs7kjvkH4l4Bop">
+  <span data-page-node-id="Zp6JmHqRMXxR9cMbkKAED9">宠物托运工作台 · v<span id="footVer" data-page-node-id="C8Mlk1E0hdjLv5iQH1Gurc">—</span></span>
+  <span data-page-node-id="nij7zBR0xiOWeljRnK8WbB">数据只存在本机浏览器与你的同步账号里，记得定期导出备份</span>
+  <span style="margin-left:auto" data-page-node-id="wgxy3qyD6FDKbPaPagxWeD">改版前已自动备份，可随时回档</span>
 </footer>
 
-<div class="modal-bg" id="modalBg"><div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="工作台弹窗"></div></div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="modal-bg" id="modalBg" data-page-node-id="WJOizA4SGIqQA1uKWDD0xj"><div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="工作台弹窗" data-page-node-id="fVb90DkmalpZyJXf68rh2H"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite" data-page-node-id="v4BRdtTFAApjsRfk1ReOEr"></div>
 
 <!-- 二次元装饰：飘浮星芒 -->
-<div class="sky-deco" aria-hidden="true">
-  <span class="d1">✦</span><span class="d2">✧</span><span class="d3">♡</span>
-  <span class="d4">🐾</span><span class="d5">✿</span>
+<div class="sky-deco" aria-hidden="true" data-page-node-id="I3QN2CK8FjjCQpN2NCMj1y">
+  <span class="d1" data-page-node-id="2emaGhPYTvSnalmuumBgOX">✦</span><span class="d2" data-page-node-id="z5MmSPMUoDRZBR90wahYHK">✧</span><span class="d3" data-page-node-id="ToMq8FtaAQHLeIcotwbi5Y">♡</span>
+  <span class="d4" data-page-node-id="5p27z8DSpvrhSHCXdXZEGB">🐾</span><span class="d5" data-page-node-id="S9BsexHVJyk6pVDtfaoqFz">✿</span>
 </div>
 
 <script>
 /* ========================= 基础工具 ========================= */
 /* 版本号：改版时只改这里，发布.bat 会读取它并提示“四份一致” */
-const APP_VERSION = '2026.11.19.1';
+const APP_VERSION = '2026.11.23.1';
 const STORAGE_KEY = 'pet_transport_workbench_v1';
 /* 是否运行在预览窗口的 iframe 里（此时原生文件选择器不可用，会跳到空白页） */
 const EMBEDDED = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
@@ -1644,6 +1653,7 @@ function hideBanner() {
 /* ========================= 状态与存储 ========================= */
 let state = {
   orders: [], passengers: [], deals: [], otherDeals: [], matchPool: [], sendLog: [],
+  trash: [],
   settings: { customNote: '回国带烟，可提前预约', freshWarn: 7, freshStale: 30 },
   activeTab: 'order-out',
   savedAt: '',        // 数据最近一次改动时间（与服务器比对用，谁新用谁）
@@ -1661,6 +1671,7 @@ function load() {
     state.otherDeals = d.otherDeals || [];
     state.matchPool = d.matchPool || [];
     state.sendLog = d.sendLog || [];
+    state.trash = d.trash || [];
     state.settings = Object.assign(state.settings, d.settings || {});
     state.activeTab = d.activeTab || 'order-out';
     state.savedAt = d.savedAt || '';
@@ -2214,6 +2225,7 @@ function applyPayload(d) {
   state.otherDeals = d.otherDeals || [];
   state.matchPool = d.matchPool || [];
   state.sendLog = d.sendLog || [];
+  state.trash = d.trash || [];
   state.settings = Object.assign(state.settings, d.settings || {});
   state.activeTab = d.activeTab || state.activeTab;
   state.savedAt = d.savedAt || new Date().toISOString();
@@ -2268,10 +2280,13 @@ function renderNav() {
   ];
   nav.innerHTML = items.map(i =>
     `<button data-panel="${i.id}" class="${i.id === ui.panel ? 'active' : ''}">${i.label}</button>`
-  ).join('');
-  nav.querySelectorAll('button').forEach(b =>
+  ).join('') + '<button id="btnUndo" type="button" disabled title="暂无可回退的操作">↶ 回退</button>';
+  nav.querySelectorAll('button[data-panel]').forEach(b =>
     b.onclick = () => { ui.panel = b.dataset.panel; renderNav(); renderPanels(); }
   );
+  const undoBtn = document.getElementById('btnUndo');
+  if (undoBtn) undoBtn.onclick = undoLast;
+  renderUndoBtn();
 }
 function renderPanels() {
   ['ledger', 'broadcast', 'pool', 'deals', 'daily', 'report', 'data'].forEach(p => {
@@ -2282,7 +2297,7 @@ function renderPanels() {
   if (ui.panel === 'deals') renderDeals();
   if (ui.panel === 'daily') renderDaily();
   if (ui.panel === 'report') renderReport();
-  if (ui.panel === 'data') { renderVerInfo(); renderAutoBak(); }
+  if (ui.panel === 'data') { renderVerInfo(); renderAutoBak(); renderTrash(); }
 }
 
 /* 今日新增：当天新录入的，或当天新确认时效的，都算「今日新增」 */
@@ -2293,13 +2308,16 @@ function isTodayNew(rec) {
 /* ========================= 概览统计 ========================= */
 function renderStats() {
   const all = state.orders.concat(state.passengers);
-  const newToday = all.filter(isTodayNew).length;
+  const t = todayStr();
+  const newToday = all.filter(r => localDateStr(r.createdAt) === t).length;
+  const confirmToday = all.filter(r => localDateStr(r.confirmedAt) === t).length;
   const pending = state.orders.filter(r => r.status === '待匹配').length;
   const needCheck = all.filter(r => freshLevel(r).level !== 'fresh').length;
   document.getElementById('stats').innerHTML =
     `<span class="stat"><b>${state.orders.length}</b>宠物订单</span>` +
     `<span class="stat"><b>${state.passengers.length}</b>乘机人</span>` +
-    `<span class="stat"><b>${newToday}</b>今日新增/确认</span>` +
+    `<span class="stat"><b>${newToday}</b>今日新增</span>` +
+    `<span class="stat"><b>${confirmToday}</b>今日确认</span>` +
     `<span class="stat${pending ? ' warn' : ''}"><b>${pending}</b>待匹配</span>` +
     `<span class="stat${needCheck ? ' warn' : ''}"><b>${needCheck}</b>待确认</span>`;
   renderStoreInfo();
@@ -2383,11 +2401,15 @@ function renderLedger() {
         if (rec) openMatch(rec, tab.kind);
       }
       else if (b.dataset.act === 'del') {
-        if (confirm('确定删除这条记录？')) {
+        if (confirm('确定删除这条记录？删除后可在顶部「回退」或「数据 → 最近删除」找回。')) {
           const arr = listOf(tab.kind);
           const i = arr.findIndex(x => x.id === id);
-          if (i >= 0) arr.splice(i, 1);
+          if (i >= 0) {
+            addTrash(tab.kind, recBrief(arr[i]), [arr[i]]);
+            arr.splice(i, 1);
+          }
           afterChange();
+          toast('已删除，可用顶部「回退」找回');
         }
       } else if (b.dataset.act === 'confirm') {
         const arr = listOf(tab.kind);
@@ -2401,11 +2423,129 @@ function renderLedger() {
   });
 }
 
+/* ========================= 全局回退 / 最近删除 =========================
+   回退：每次数据变动把「变动前」的版本压栈，顶部「回退」或 Ctrl+Z 恢复最近一步。
+   最近删除：删除的记录同时留一份在 state.trash，刷新后也能在「数据」页找回。 */
+let undoStack = [], undoBase = null;
+const UNDO_MAX = 30;
+const TRASH_MAX = 50;
+const TRASH_DAYS = 30;
+
+function packCoreData() {
+  return {
+    orders: cloneData(state.orders), passengers: cloneData(state.passengers),
+    deals: cloneData(state.deals), otherDeals: cloneData(state.otherDeals),
+    matchPool: cloneData(state.matchPool), sendLog: cloneData(state.sendLog),
+    trash: cloneData(state.trash || []),
+  };
+}
+function unpackCoreData(d) {
+  state.orders = cloneData(d.orders || []);
+  state.passengers = cloneData(d.passengers || []);
+  state.deals = cloneData(d.deals || []);
+  state.otherDeals = cloneData(d.otherDeals || []);
+  state.matchPool = cloneData(d.matchPool || []);
+  state.sendLog = cloneData(d.sendLog || []);
+  state.trash = cloneData(d.trash || []);
+}
+function pushUndoPoint() {
+  const sig = dataSig();
+  if (!undoBase) { undoBase = { sig: sig, data: packCoreData() }; return; }
+  if (undoBase.sig === sig) return;
+  undoStack.push(undoBase);
+  if (undoStack.length > UNDO_MAX) undoStack.shift();
+  undoBase = { sig: sig, data: packCoreData() };
+}
+function undoLast() {
+  if (!undoStack.length) { toast('暂无可回退的操作'); return; }
+  const prev = undoStack.pop();
+  unpackCoreData(prev.data);
+  undoBase = { sig: dataSig(), data: packCoreData() };
+  afterChange({ noUndo: true });
+  toast('已回退上一步');
+}
+function renderUndoBtn() {
+  const b = document.getElementById('btnUndo');
+  if (!b) return;
+  b.disabled = !undoStack.length;
+  b.textContent = undoStack.length ? '↶ 回退 ' + undoStack.length : '↶ 回退';
+  b.title = undoStack.length ? '回退最近一步（Ctrl+Z）' : '暂无可回退的操作';
+}
+function trashKindLabel(kind) {
+  return { order: '宠物订单', passenger: '乘机人', deal: '成单', otherDeal: '其他成单', pool: '匹配池' }[kind] || '记录';
+}
+function addTrash(kind, label, items) {
+  if (!items || !items.length) return;
+  state.trash = state.trash || [];
+  state.trash.unshift({
+    id: uid(), at: new Date().toISOString(), kind: kind, label: label || '',
+    items: cloneData(items),
+  });
+  const cutoff = Date.now() - TRASH_DAYS * 86400000;
+  state.trash = state.trash.filter(t => (Date.parse(t.at) || 0) >= cutoff).slice(0, TRASH_MAX);
+}
+function recBrief(r) {
+  return [r.timeText || r.dealDate || '', r.from || '', r.to || '', r.contact || '']
+    .filter(Boolean).join(' ');
+}
+function dealBrief(d) {
+  const o = (d.oSnap || {}).contact || '', p = (d.pSnap || {}).contact || '';
+  return [d.dealDate || '', d.depDate || '', d.from || '', d.to || '', o, p].filter(Boolean).join(' ');
+}
+function renderTrash() {
+  const box = document.getElementById('trashBody');
+  if (!box) return;
+  const list = state.trash || [];
+  if (!list.length) {
+    box.innerHTML = '<div class="hint">暂无删除记录。删除的订单 / 乘机人 / 成单会保留在这里，30 天内可恢复。</div>';
+    return;
+  }
+  box.innerHTML = `<div class="wrap-table"><table>
+      <thead><tr><th>删除时间</th><th>类型</th><th>内容</th><th>操作</th></tr></thead>
+      <tbody>${list.map(t => `<tr>
+        <td>${esc(new Date(t.at).toLocaleString('zh-CN', { hour12: false }))}</td>
+        <td>${esc(trashKindLabel(t.kind))}</td>
+        <td>${esc(t.label) || '<span class="muted">-</span>'}</td>
+        <td><button class="btn sm ghost" data-trash-id="${t.id}">恢复</button></td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    <div class="toolbar" style="margin-top:10px">
+      <span class="hint">共 ${list.length} 条，保留最近 ${TRASH_DAYS} 天</span>
+      <span style="flex:1"></span>
+      <button class="btn gray" id="btnTrashClear">清空最近删除</button>
+    </div>`;
+  box.querySelectorAll('button[data-trash-id]').forEach(b => {
+    b.onclick = () => restoreTrash(b.dataset.trashId);
+  });
+  const cb = document.getElementById('btnTrashClear');
+  if (cb) cb.onclick = () => {
+    if (!confirm('清空后这些记录将无法恢复，确定？')) return;
+    state.trash = [];
+    afterChange({ noUndo: true });
+    toast('已清空最近删除');
+  };
+}
+function restoreTrash(id) {
+  const t = (state.trash || []).find(x => x.id === id);
+  if (!t) return;
+  const map = { order: 'orders', passenger: 'passengers', deal: 'deals', otherDeal: 'otherDeals', pool: 'matchPool' };
+  const key = map[t.kind];
+  if (!key) return;
+  let n = 0;
+  (t.items || []).forEach(it => {
+    if (!state[key].some(x => x.id === it.id)) { state[key].push(cloneData(it)); n++; }
+  });
+  state.trash = state.trash.filter(x => x.id !== id);
+  afterChange();
+  toast(n ? '已恢复 ' + n + ' 条' : '这些记录已经存在');
+}
+
 /* keepSavedAt：刚从云端拉取时不要刷新时间戳，否则本机会被当成「更新」再推回去 */
 function afterChange(opts) {
   const keep = !!(opts && opts.keepSavedAt);
+  if (!(opts && opts.noUndo)) pushUndoPoint();
   save(keep ? { kind: 'ui' } : undefined);
-  takeSnapshot(); renderStats(); renderPanels();
+  takeSnapshot(); renderStats(); renderPanels(); renderUndoBtn();
   if (!keep) ghSchedule();
   autoBakSchedule();
 }
@@ -2546,7 +2686,10 @@ function matchPotential(rec, kind) {
 }
 function pickBroadcastSet(recs, kind, mode) {
   if (mode === 'incr') {
-    return recs.filter(isTodayNew);
+    return recs.filter(r => localDateStr(r.createdAt) === todayStr());
+  }
+  if (mode === 'confirm') {
+    return recs.filter(r => localDateStr(r.confirmedAt) === todayStr());
   }
   if (mode === 'pick') {
     const n = Math.max(5, Math.min(60, parseInt(document.getElementById('bcTopN').value, 10) || 15));
@@ -2557,8 +2700,14 @@ function pickBroadcastSet(recs, kind, mode) {
   }
   return recs;
 }
-function modeLabel(mode) { return mode === 'incr' ? '今日新增/确认' : mode === 'pick' ? '精选推荐' : '全部在找'; }
-function modeShort(mode) { return mode === 'incr' ? '增量' : mode === 'pick' ? '精选' : '全量'; }
+function modeLabel(mode) {
+  return mode === 'incr' ? '今日新增' : mode === 'confirm' ? '今日确认'
+    : mode === 'pick' ? '精选推荐' : '全部在找';
+}
+function modeShort(mode) {
+  return mode === 'incr' ? '新增' : mode === 'confirm' ? '确认'
+    : mode === 'pick' ? '精选' : '全量';
+}
 function buildText() {
   const kind = audienceKind();
   const aud = currentAudience();
@@ -2589,7 +2738,7 @@ function buildText() {
     sortRecs(recs).forEach(r => lines.push(buildLine(kind, r)));
   }
 
-  const body = lines.length ? lines.join('\n') : (mode === 'incr' ? '（今天暂无新增/确认）' : '（暂无符合条件的记录）');
+  const body = lines.length ? lines.join('\n') : (mode === 'incr' ? '（今天暂无新增记录）' : mode === 'confirm' ? '（今天暂无确认记录）' : '（暂无符合条件的记录）');
   let out = (useHeader ? head + '\n' : '') + body;
   if (useNote && noteTxt) out += '\n\n此外\n' + noteTxt;
   document.getElementById('bcText').value = out;
@@ -3236,18 +3385,28 @@ function poolRemain(x) {
   const h = Math.floor(left / 3600000), m = Math.floor(left % 3600000 / 60000);
   return h > 0 ? '剩 ' + h + ' 小时' : '剩 ' + m + ' 分钟';
 }
-/* 从一行文字里取出发日期：支持「11月28日 / 11-28 / 11/28 / 11.28 / 今天 / 明天 / 后天」 */
+/* 从一行文字里取出发日期：支持「11月28日 / 11-28 / 11/28 / 11.28 / 11月中 / 11月底 / 11月 / 今天 / 明天 / 后天」 */
 function poolDateFrom(text) {
-  if (/今天|今日/.test(text)) return { iso: todayStr(), label: '今天' };
-  if (/明天|明日/.test(text)) { const d = new Date(); d.setDate(d.getDate() + 1); return { iso: localDateStr(d), label: '明天' }; }
-  if (/后天/.test(text)) { const d = new Date(); d.setDate(d.getDate() + 2); return { iso: localDateStr(d), label: '后天' }; }
+  if (/今天|今日/.test(text)) return { iso: todayStr(), label: '今天', raw: '今天' };
+  if (/明天|明日/.test(text)) { const d = new Date(); d.setDate(d.getDate() + 1); return { iso: localDateStr(d), label: '明天', raw: '明天' }; }
+  if (/后天/.test(text)) { const d = new Date(); d.setDate(d.getDate() + 2); return { iso: localDateStr(d), label: '后天', raw: '后天' }; }
   const m = text.match(/(\d{1,2})\s*[月\/\-\.]\s*(\d{1,2})\s*日?/);
-  if (!m) return null;
-  const mo = +m[1], da = +m[2];
-  if (mo < 1 || mo > 12 || da < 1 || da > 31) return null;
-  const d = new Date(new Date().getFullYear(), mo - 1, da);
-  if (d.getMonth() !== mo - 1) return null;
-  return { iso: localDateStr(d), label: mo + '月' + da + '日', raw: m[0] };
+  if (m) {
+    const mo = +m[1], da = +m[2];
+    if (mo >= 1 && mo <= 12 && da >= 1 && da <= 31) {
+      const d = new Date(new Date().getFullYear(), mo - 1, da);
+      if (d.getMonth() === mo - 1) return { iso: localDateStr(d), label: mo + '月' + da + '日', raw: m[0] };
+    }
+  }
+  /* 模糊时间：11月中 / 11月下 / 11月初 / 11月底 / 11月上旬…，按上5日 / 中15日 / 下25日折算用于排序 */
+  const f = text.match(/(\d{1,2})\s*月\s*(上旬|中旬|下旬|上|中|下|底|初|末)?/);
+  if (!f) return null;
+  const fmo = +f[1];
+  if (fmo < 1 || fmo > 12) return null;
+  const part = f[2] || '';
+  const day = /[上初]/.test(part) ? 5 : /[下底末]/.test(part) ? 25 : 15;
+  const fd = new Date(new Date().getFullYear(), fmo - 1, day);
+  return { iso: localDateStr(fd), label: fmo + '月' + part, raw: f[0] };
 }
 function guessPoolDir(from, to) {
   const f = DOMESTIC_CITIES.some(c => from.includes(c));
@@ -3257,23 +3416,40 @@ function guessPoolDir(from, to) {
 function parsePoolLine(line) {
   const raw = String(line || '').trim();
   if (!raw) return { error: '空行' };
-  const norm = raw.replace(/->|=>|➝|➔|⟶|⇒|＞/g, '→').replace(/\u3000/g, ' ');
-  const seg = norm.split('→');
-  if (seg.length < 2) return { error: '缺少「甲方→客户」' };
-  const left = seg[0].trim();
-  const right = seg.slice(1).join('→').trim();
-  const date = poolDateFrom(left);
-  if (!date) return { error: '没识别到日期，如「11月28日」' };
-  const client = left.replace(date.raw || /今天|今日|明天|明日|后天/g, '').replace(/\s+/g, ' ').trim();
-  if (!client) return { error: '缺少甲方' };
-  const parts = right.split(/\s+/).filter(Boolean);
-  if (parts.length < 3) return { error: '客户后面需要「出发地 目的地」' };
-  const to = parts[parts.length - 1];
-  const from = parts[parts.length - 2];
-  const customer = parts.slice(0, -2).join(' ');
+  const norm = raw.replace(/->|=>|➝|➔|⟶|⇒|＞/g, '→').replace(/\u3000/g, ' ').replace(/\s+/g, ' ').trim();
+  const hasArrow = norm.indexOf('→') >= 0;
+
+  let date = null, client = '', customer = '', from = '', to = '';
+
+  if (hasArrow) {
+    const seg = norm.split('→');
+    const left = seg[0].trim();
+    const right = seg.slice(1).join('→').trim();
+    date = poolDateFrom(left);
+    client = (date ? left.replace(date.raw, '') : left).trim();
+    if (!client) return { error: '箭头左边缺少甲方' };
+    const parts = right.split(' ').filter(Boolean);
+    if (parts.length < 3) return { error: '箭头右边需要「客户 出发地 目的地」' };
+    to = parts[parts.length - 1];
+    from = parts[parts.length - 2];
+    customer = parts.slice(0, -2).join(' ');
+  } else {
+    date = poolDateFrom(norm);
+    const rest = (date ? norm.replace(date.raw, '') : norm).trim();
+    const parts = rest.split(' ').filter(Boolean);
+    if (parts.length < 4) {
+      return { error: '格式：时间 甲方 客户 出发地 目的地（如：11月中 小谭 Oct_grace 上海 温哥华）' };
+    }
+    client = parts[0];
+    customer = parts.slice(1, -2).join(' ');
+    from = parts[parts.length - 2];
+    to = parts[parts.length - 1];
+  }
   if (!customer) return { error: '缺少客户' };
   return {
-    time: date.iso, timeText: date.label, client, customer, from, to,
+    time: date ? date.iso : '',
+    timeText: date ? date.label : '',
+    client: client, customer: customer, from: from, to: to,
     dir: guessPoolDir(from, to),
   };
 }
@@ -3283,7 +3459,7 @@ function addPoolLines() {
   const lines = String((box && box.value) || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
   if (!lines.length) {
     msg.className = 'hint warn';
-    msg.textContent = '先输入或粘贴一行，例如：11月28日 小谭→Oct_grace 温哥华 上海';
+    msg.textContent = '先输入或粘贴一行，例如：11月中 小谭 Oct_grace 上海 温哥华';
     return;
   }
   const bad = [];
@@ -3364,9 +3540,11 @@ function renderPool() {
         x.status = 'active';
         afterChange();
         toast('已重新启用，48 小时内有效');
-      } else if (confirm('确定从匹配池删除「' + (x.client || '') + '→' + (x.customer || '') + '」？')) {
+      } else if (confirm('确定从匹配池删除「' + (x.client || '') + '→' + (x.customer || '') + '」？删除后可在「数据 → 最近删除」找回。')) {
+        addTrash('pool', [x.timeText || x.time, x.client, x.customer].filter(Boolean).join(' '), [x]);
         state.matchPool = state.matchPool.filter(v => v.id !== x.id);
         afterChange();
+        toast('已删除，可用顶部「回退」找回');
       }
     };
   });
@@ -4245,10 +4423,12 @@ function renderDeals() {
       if (b.dataset.act === 'files') openDealFiles(d);
       else if (b.dataset.act === 'materials') openDealMaterials(d);
       else if (b.dataset.act === 'edit') openDealForm(d);
-      else if (confirm('确定删除这笔成单？（台账里的原记录不会自动恢复，资料 / 素材文件夹不会被删除）')) {
+      else if (confirm('确定删除这笔成单？（台账里的原记录不会自动恢复，资料 / 素材文件夹不会被删除；删除后可在「数据 → 最近删除」找回）')) {
+        addTrash('deal', dealBrief(d), [d]);
         dropDealBlobs(d);
         state.deals = state.deals.filter(x => x.id !== d.id);
         afterChange();
+        toast('已删除，可用顶部「回退」找回');
       }
     };
   });
@@ -4257,9 +4437,11 @@ function renderDeals() {
       const d = state.otherDeals.find(x => x.id === b.dataset.otherId);
       if (!d) return;
       if (b.dataset.otherAct === 'edit') openOtherDealForm(d);
-      else if (confirm('确定删除这条其他成单？')) {
+      else if (confirm('确定删除这条其他成单？删除后可在「数据 → 最近删除」找回。')) {
+        addTrash('otherDeal', [d.time, d.client, d.carrier].filter(Boolean).join(' '), [d]);
         state.otherDeals = state.otherDeals.filter(x => x.id !== d.id);
         afterChange();
+        toast('已删除，可用顶部「回退」找回');
       }
     };
   });
@@ -4509,6 +4691,7 @@ function importJson(file) {
       state.otherDeals = d.otherDeals || [];
       state.matchPool = d.matchPool || [];
       state.sendLog = d.sendLog || [];
+      state.trash = d.trash || [];
       state.settings = Object.assign(state.settings, d.settings || {});
       state.savedAt = d.savedAt || new Date().toISOString();
       afterChange(); toast('导入成功（覆盖前的版本已存为快照）');
@@ -5125,6 +5308,7 @@ function loadSample() {
 function clearAll() {
   if (!confirm('将清空全部台账与成单数据。清空前的版本已自动存为快照，可用「恢复快照」找回。确定清空？')) return;
   state.orders = []; state.passengers = []; state.deals = []; state.otherDeals = []; state.matchPool = []; state.sendLog = [];
+  state.trash = [];
   afterChange(); toast('已清空（可用「恢复快照」找回）');
 }
 
@@ -5395,12 +5579,23 @@ function bindEvents() {
   document.getElementById('btnSyncLogout').onclick = logout;
 
   document.getElementById('modalBg').onclick = e => { if (e.target.id === 'modalBg') closeModal(); };
+
+  /* 全局回退：Ctrl/Cmd+Z（在输入框里时不拦截，保留文字撤销） */
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
+    if (String(e.key).toLowerCase() !== 'z') return;
+    const el = e.target;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return;
+    e.preventDefault();
+    undoLast();
+  });
 }
 
 /* ========================= 启动 ========================= */
 function init() {
   load();
   autoBakLoad();
+  undoBase = { sig: dataSig(), data: packCoreData() }; // 回退基线：页面打开时的版本
   ui.panel = 'ledger';
   const verEl = document.getElementById('appVer');
   if (verEl) verEl.textContent = 'v' + APP_VERSION;
